@@ -8,8 +8,7 @@ from google import genai
 
 SHEET_NAME = "Gemini Logs" 
 MODEL_MAPPING = {
-    "gemini-2.0-flash-exp": "gemini-2.0-flash-exp", # Updated example, ensure your mapping is correct
-    "gemini-1.5-pro": "gemini-1.5-pro"
+    "gemini-3-pro-preview": "gemini-3-pro-preview"
 }
 
 # --- Google Sheets Connection ---
