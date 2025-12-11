@@ -12,7 +12,7 @@ from firebase_admin import firestore
 # --- Configuration & Setup ---
 
 MODEL_MAPPING = {
-    "Gemini 1.5 Pro": "gemini-1.5-pro", 
+    "Gemini 1.5 Pro": "gemini-3-pro-preview", 
     # Updated to a currently active model ID for testing
 }
 
