@@ -1,4 +1,8 @@
 streamlit
 google-genai
 gspread
+<<<<<<< HEAD
 google-auth
+=======
+google-auth
+>>>>>>> cb554ad (	modified:   .streamlit/secrets.toml)
