@@ -88,6 +88,24 @@ def get_ai_response(model_selection, user_prompt):
     except Exception as e:
         return f"Error calling API: {str(e)}"
 
+def set_clarification_prompt():
+    """
+    Callback function to update the prompt input when the user
+    clicks 'I don't understand'. This runs BEFORE the page reruns.
+    """
+    if st.session_state.get("last_response"):
+        explanation_request = (
+            "I dont understand this - please could you explain it in more detail - "
+            "the user is an english speaker and is trying to understand afrikaans "
+            "so help them understand."
+        )
+        
+        # Combine the request with the previous output
+        new_prompt_text = f"{explanation_request}\n\n---\n\n{st.session_state['last_response']}"
+        
+        # Update the prompt input box via session state
+        st.session_state["prompt_input"] = new_prompt_text
+
 # --- Streamlit Interface ---
 
 # 1. Initialize Session State Variables
@@ -146,7 +164,7 @@ if st.button("🚀 Generate Response", type="primary"):
             
             # 3. Display
             st.markdown("### ✨ Response")
-            st.markdown(ai_reply) # Changed from st.code to st.markdown for better readability
+            st.markdown(ai_reply)
             
             # 4. Save to Google Sheets
             save_to_google_sheets(user_id_input, selected_label, user_prompt, ai_reply)
@@ -159,22 +177,8 @@ if st.session_state["last_response"]:
     st.markdown("---")
     st.write("Need clarification?")
     
-    if st.button("I don't understand this"):
-        # 1. Define the wrapper text
-        explanation_request = (
-            "I dont understand this - please could you explain it in more detail - "
-            "the user is an english speaker and is trying to understand afrikaans "
-            "so help them understand."
-        )
-        
-        # 2. Combine the request with the previous output
-        new_prompt_text = f"{explanation_request}\n\n---\n\n{st.session_state['last_response']}"
-        
-        # 3. Update the prompt input box via session state
-        st.session_state["prompt_input"] = new_prompt_text
-        
-        # 4. Rerun to show the text in the input box immediately
-        st.rerun()
+    # We use the callback (on_click) to update the state safely
+    st.button("I don't understand this", on_click=set_clarification_prompt)
 
 st.markdown("---")
 
