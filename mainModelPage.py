@@ -131,8 +131,6 @@ if "messages" not in st.session_state:
 if "auto_execute_clarification" not in st.session_state:
     st.session_state["auto_execute_clarification"] = False
 
-st.markdown("---")
-
 # --- Top Image Area (Side by Side) ---
 img_col1, img_col2, img_col3 = st.columns(3)
 
