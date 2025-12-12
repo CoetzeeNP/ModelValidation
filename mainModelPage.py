@@ -9,7 +9,7 @@ from google.genai import types
 
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
-    "gemini-3-pro-preview": "gemini-3-pro-preview"
+    "gemini-3-pro-preview": "gemini-3-pro-preview" # Updated to a likely valid model ID for testing
 }
 
 # --- Google Sheets Connection ---
@@ -26,13 +26,16 @@ def get_sheet_connection():
     ]
 
     try:
-        s_account_info = st.secrets["gcp_service_account"]
-        creds = Credentials.from_service_account_info(
-            s_account_info, scopes=scopes
-        )
-        client = gspread.authorize(creds)
-        sheet = client.open(SHEET_NAME).sheet1
-        return sheet
+        if "gcp_service_account" in st.secrets:
+            s_account_info = st.secrets["gcp_service_account"]
+            creds = Credentials.from_service_account_info(
+                s_account_info, scopes=scopes
+            )
+            client = gspread.authorize(creds)
+            sheet = client.open(SHEET_NAME).sheet1
+            return sheet
+        else:
+            return None
         
     except Exception as e:
         st.error(f"❌ Connection Error: {e}")
@@ -87,7 +90,7 @@ def get_ai_response(model_selection, chat_history, system_instruction_text):
             # 2. Configure the model with the System Instruction
             config = types.GenerateContentConfig(
                 temperature=0.7,
-                system_instruction=system_instruction_text # <--- Added here
+                system_instruction=system_instruction_text 
             )
 
             # 3. Generate content
@@ -109,6 +112,13 @@ def trigger_clarification():
     """
     st.session_state["auto_execute_clarification"] = True
 
+def clear_chat_history():
+    """
+    Clears the message history from session state.
+    """
+    st.session_state["messages"] = []
+    st.session_state["auto_execute_clarification"] = False
+
 # --- Streamlit Interface ---
 
 st.set_page_config(page_title="Gemini Chat", layout="wide")
@@ -120,29 +130,61 @@ if "messages" not in st.session_state:
 if "auto_execute_clarification" not in st.session_state:
     st.session_state["auto_execute_clarification"] = False
 
-st.title("🤖 Gemini Contextual Chat")
+# --- NEW: Top Image Area (Side by Side) ---
+# Using placeholders here. Replace URLs with your actual image links or local file paths.
+img_col1, img_col2, img_col3 = st.columns(3)
+
+with img_col1:
+    st.image("https://placehold.co/400x75/orange/white?text=UFS+Logo", use_container_width=True)
+
+with img_col2:
+    st.image("https://placehold.co/400x75/blue/white?text=Afrikaans+Department", use_container_width=True)
+
+with img_col3:
+    st.image("https://placehold.co/400x75/blue/white?text=ICDF", use_container_width=True)
+
+st.title("Afrikaans Assistant - Demo")
 st.markdown("---")
 
 # 2. Configuration Sidebar / Area
 with st.container():
     col1, col2 = st.columns([1, 2])
     with col1:
-        user_id_input = st.text_input("👤 User ID", placeholder="student_123")
-        selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
+        # --- NEW: User ID with Submit Button ---
+        sub_col1, sub_col2 = st.columns([3, 1])
+        with sub_col1:
+            user_id_input = st.text_input("👤 User ID", placeholder="student_123")
+        with sub_col2:
+            # Using some vertical spacing to align button with input box
+            st.write("") 
+            st.write("")
+            if st.button("Submit"):
+                if user_id_input:
+                    st.toast(f"✅ ID Set: {user_id_input}")
+                else:
+                    st.toast("⚠️ Please type an ID")
+
+        #selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
+        
+        # --- NEW: Clear Chat Button ---
+        st.write("") # Spacer
+        if st.button("🗑️ Clear Chat History", type="primary"):
+            clear_chat_history()
+            st.rerun() # Force a reload to reflect the empty chat immediately
     
     with col2:
-        # NEW: System Message Input
+        # System Message Input
         default_system_msg = (
             "You are a helpful Afrikaans language tutor. "
             "Explain answers in simple English first, then provide the Afrikaans translation. "
             "Always reference the STOMPI rule when correcting sentence structure."
         )
-        system_instruction_input = st.text_area(
-            "🛠️ System Instruction (Persona)", 
-            value=default_system_msg,
-            height=100,
-            help="This tells the AI how to behave (e.g., 'You are a strict teacher')."
-        )
+        #system_instruction_input = st.text_area(
+        #    "🛠️ System Instruction (Persona)", 
+        #    value=default_system_msg,
+        #    height=150,
+        #    help="This tells the AI how to behave (e.g., 'You are a strict teacher')."
+        #)
 
 # 3. Display Chat History
 for message in st.session_state["messages"]:
