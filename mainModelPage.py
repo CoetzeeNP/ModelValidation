@@ -136,27 +136,6 @@ if "auto_execute_clarification" not in st.session_state:
 if "feedback_submitted" not in st.session_state:
     st.session_state["feedback_submitted"] = False
 
-st.markdown("""
-<style>
-/* 1. Centering Content (Even Spacing) */
-.st-column > div:nth-child(1) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;    
-    justify-content: center;
-}
-
-/* 2. Uniform Image Height and Scaling */
-img {
-    height: 100px;
-    width: auto !important;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto; 
-}
-</style>
-""", unsafe_allow_html=True)
-
 # --- Top Image Area (Side by Side) ---
 img_col1, img_col2, img_col3 = st.columns(3)
 
