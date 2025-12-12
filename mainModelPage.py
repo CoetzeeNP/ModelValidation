@@ -131,38 +131,19 @@ if "messages" not in st.session_state:
 if "auto_execute_clarification" not in st.session_state:
     st.session_state["auto_execute_clarification"] = False
 
-st.markdown("""
-<style>
-/* 1. Centering Content (Even Spacing) */
-.st-column > div:nth-child(1) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;    
-    justify-content: center;
-}
-
-/* 2. Uniform Image Height and Scaling */
-img {
-    height: 100px;
-    width: auto !important;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto; 
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown("---")
 
 # --- Top Image Area (Side by Side) ---
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image("/workspaces/ModelValidation/images/ufs_logo.png", width="content")
+    st.image("https://placehold.co/400x75/blue/white?text=UFS Logo", width="stretch")
 
 with img_col2:
-    st.image("https://placehold.co/400x75/blue/white?text=Afrikaans+Department", width="content")
+    st.image("https://placehold.co/400x75/blue/white?text=Humanities", width="stretch")
 
 with img_col3:
-    st.image("/workspaces/ModelValidation/images/icdf_logo.png", width="content")
+    st.image("https://placehold.co/400x75/blue/white?text=ICDF", width="stretch")
 
 
 st.title("Afrikaans Assistant - Demo")
