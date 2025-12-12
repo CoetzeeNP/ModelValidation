@@ -9,7 +9,7 @@ from google.genai import types
 
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
-   "gemini-3-pro-preview": "gemini-3-pro-preview"
+"gemini-3-pro-preview": "gemini-3-pro-preview"
 }
 
 # --- Google Sheets Connection ---
@@ -119,6 +119,7 @@ def clear_chat_history():
     """
     st.session_state["messages"] = []
     st.session_state["auto_execute_clarification"] = False
+    st.session_state["feedback_submitted"] = False  # Reset feedback flag
 
 # --- Streamlit Interface ---
 
@@ -131,17 +132,42 @@ if "messages" not in st.session_state:
 if "auto_execute_clarification" not in st.session_state:
     st.session_state["auto_execute_clarification"] = False
 
+# NEW: Track if feedback buttons have been clicked for the current response
+if "feedback_submitted" not in st.session_state:
+    st.session_state["feedback_submitted"] = False
+
+st.markdown("""
+<style>
+/* 1. Centering Content (Even Spacing) */
+.st-column > div:nth-child(1) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;    
+    justify-content: center;
+}
+
+/* 2. Uniform Image Height and Scaling */
+img {
+    height: 100px;
+    width: auto !important;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto; 
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Top Image Area (Side by Side) ---
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image("https://placehold.co/400x75/blue/white?text=UFS Logo", width="stretch")
+    st.image("/workspaces/ModelValidation/images/ufs_logo.png", width='stretch')
 
 with img_col2:
-    st.image("https://placehold.co/400x75/blue/white?text=Humanities", width="stretch")
+    st.image("https://placehold.co/400x75/blue/white?text=Afrikaans+Department", use_container_width=True)
 
 with img_col3:
-    st.image("https://placehold.co/400x75/blue/white?text=ICDF", width="stretch")
+    st.image("/workspaces/ModelValidation/images/icdf_logo.png", width='stretch')
 
 
 st.title("Afrikaans Assistant - Demo")
@@ -234,6 +260,9 @@ if final_prompt:
         
         # B. Add to local state history
         st.session_state["messages"].append({"role": "user", "content": final_prompt})
+        
+        # RESET Feedback flag because we are starting a new conversation turn
+        st.session_state["feedback_submitted"] = False
 
         # C. Generate Response
         with st.chat_message("assistant"):
@@ -258,7 +287,14 @@ if final_prompt:
         )
 
 # 6. Interaction Buttons (Understanding vs Clarification)
-if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == "assistant":
+# Only show if:
+#   1. There are messages
+#   2. Last message is from assistant
+#   3. Feedback hasn't been submitted yet
+if st.session_state["messages"] and \
+   st.session_state["messages"][-1]["role"] == "assistant" and \
+   not st.session_state["feedback_submitted"]:
+
     st.markdown("---")
     st.write("Does this explanation help?")
     
@@ -274,14 +310,22 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
                 save_to_google_sheets(
                     user_id_input,
                     selected_label,
-                    "User clicked 'I Understand'", # Prompt column placeholder
-                    last_ai_msg[0:50] + "...",     # Response column snippet
-                    "UNDERSTOOD"                   # Interaction Type
+                    "User clicked 'I Understand'", 
+                    last_ai_msg[0:50] + "...",     
+                    "UNDERSTOOD"                   
                 )
                 st.toast("Great! Feedback recorded.")
+                
+                # Update state and rerun to hide buttons
+                st.session_state["feedback_submitted"] = True
+                st.rerun()
             else:
                 st.error("Please enter a User ID to save feedback.")
 
     # Button 2: I Don't Understand
     with col_clarify:
+        # Clicking this triggers 'trigger_clarification', which sets a flag and reruns.
+        # The rerun will process a new "User" message (the clarification request).
+        # Once a "User" message is added, these buttons will naturally disappear 
+        # (because the last message is no longer 'assistant').
         st.button("🤔 I don't understand", on_click=trigger_clarification, use_container_width=True)
