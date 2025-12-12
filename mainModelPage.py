@@ -156,13 +156,13 @@ img {
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image("/workspaces/ModelValidation/images/ufs_logo.png", width='stretch')
+    st.image("/workspaces/ModelValidation/images/ufs_logo.png", width="content")
 
 with img_col2:
-    st.image("https://placehold.co/400x75/blue/white?text=Afrikaans+Department", use_container_width=True)
+    st.image("https://placehold.co/400x75/blue/white?text=Afrikaans+Department", width="content")
 
 with img_col3:
-    st.image("/workspaces/ModelValidation/images/icdf_logo.png", width='stretch')
+    st.image("/workspaces/ModelValidation/images/icdf_logo.png", width="content")
 
 
 st.title("Afrikaans Assistant - Demo")
