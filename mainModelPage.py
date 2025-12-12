@@ -165,7 +165,8 @@ with st.container():
                     st.toast("⚠️ Please type an ID")
 
         #selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
-        
+        selected_label = "gemini-3-pro-preview"
+
         # --- NEW: Clear Chat Button ---
         st.write("") # Spacer
         if st.button("🗑️ Clear Chat History", type="primary"):
