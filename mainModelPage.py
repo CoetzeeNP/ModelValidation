@@ -164,8 +164,8 @@ with st.container():
                 else:
                     st.toast("⚠️ Please type an ID")
 
-        #selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
-        selected_label = "gemini-3-pro-preview"
+        selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
+        #selected_label = "gemini-3-pro-preview"
 
         # --- NEW: Clear Chat Button ---
         st.write("") # Spacer
@@ -180,14 +180,14 @@ with st.container():
             "Explain answers in simple English first, then provide the Afrikaans translation. "
             "Always reference the STOMPI rule when correcting sentence structure."
         )
-        #system_instruction_input = st.text_area(
-        #    "🛠️ System Instruction (Persona)", 
-        #    value=default_system_msg,
-        #    height=150,
-        #    help="This tells the AI how to behave (e.g., 'You are a strict teacher')."
-        #)
+        system_instruction_input = st.text_area(
+            "🛠️ System Instruction (Persona)", 
+            value=default_system_msg,
+            height=150,
+            help="This tells the AI how to behave (e.g., 'You are a strict teacher')."
+        )
 
-        system_instruction_input = "You are a helpful Afrikaans language tutor. " + "Explain answers in simple English first, then provide the Afrikaans translation. " + "Always reference the STOMPI rule when correcting sentence structure."
+        #system_instruction_input = "You are a helpful Afrikaans language tutor. " + "Explain answers in simple English first, then provide the Afrikaans translation. " + "Always reference the STOMPI rule when correcting sentence structure."
 
 # 3. Display Chat History
 for message in st.session_state["messages"]:
