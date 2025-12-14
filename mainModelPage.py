@@ -4,7 +4,6 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from google import genai
 from google.genai import types
-import html
 
 # --- Configuration ---
 SHEET_NAME = "Gemini Logs"
@@ -26,6 +25,11 @@ st.markdown("""
     }
     div[data-testid="stChatMessage"] {
       background: transparent !important;
+    }
+
+    /* OPTIONAL: hide avatars completely */
+    div[data-testid="stChatMessageAvatar"] {
+      display: none !important;
     }
 
     /* SHARED CARD STYLES (no avatar layout) */
@@ -50,33 +54,34 @@ st.markdown("""
         border: 1px solid #bbdefb;
         color: #0d47a1;
     }
-    
+
     /* TUTOR SPECIFIC COLORS (Soft Red) */
     .tutor-card {
         background-color: #ffebee;
         border: 1px solid #ffcdd2;
         color: #b71c1c;
     }
-    
+
     .stChatInput {
         padding-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Safe renderer (no avatars) ---
+# --- Safe renderer (preserves Markdown; no HTML injection from model) ---
 def render_chat_card(who_label: str, css_class: str, text: str):
-    safe_text = html.escape(text).replace("\n", "<br>")
-    st.markdown(
-        f"""
-        <div class="chat-card {css_class}">
-            <div class="chat-content">
-                <b>{who_label}:</b><br>{safe_text}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Wrapper uses HTML for styling only
+    st.markdown(f"<div class='chat-card {css_class}'>", unsafe_allow_html=True)
+
+    # Label as Markdown
+    st.markdown(f"**{who_label}:**")
+
+    # Message as Markdown (SAFE: no HTML execution)
+    st.markdown(text, unsafe_allow_html=False)
+
+    # Close wrapper
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 # --- Google Sheets Connection ---
 @st.cache_resource
@@ -311,7 +316,6 @@ if st.session_state["messages"] and \
                 st.rerun()
             else:
                 st.error("Please enter a User ID in the sidebar.")
-
 
     with col_clarify:
         st.button("🤔 I don't understand", on_click=trigger_clarification, use_container_width=True)
