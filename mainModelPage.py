@@ -190,7 +190,7 @@ def get_sheet_connection():
         else:
             return None
     except Exception as e:
-        st.error(f"❌ Connection Error: {e}")
+        st.error(f"Connection Error: {e}")
         return None
 
 sheet = get_sheet_connection()
@@ -281,12 +281,12 @@ with st.sidebar:
     st.header("Settings")
 
     st.caption("1. Student Identity")
-    user_id_input = st.text_input("👤 Student ID", placeholder="Enter ID here...")
+    user_id_input = st.text_input("Student ID", placeholder="Enter ID here...")
     if st.button("Set ID"):
         if user_id_input:
-            st.toast(f"✅ ID Set: {user_id_input}")
+            st.toast(f"ID Set Student: {user_id_input}")
         else:
-            st.toast("⚠️ Please type an ID")
+            st.toast("Please type an ID")
 
     st.markdown("---")
 
@@ -299,14 +299,14 @@ with st.sidebar:
         "Always reference the STOMPI rule when correcting sentence structure."
     )
     system_instruction_input = st.text_area(
-        "🛠️ System Persona",
+        "System Message",
         value=default_system_msg,
         height=150
     )
 
     st.markdown("---")
 
-    if st.button("🗑️ Clear Chat History", type="primary"):
+    if st.button("Clear Chat History", type="primary"):
         clear_chat_history()
         st.rerun()
 
@@ -347,7 +347,7 @@ elif prompt:
 # Process prompt
 if final_prompt:
     if not user_id_input.strip():
-        st.error("⚠️ Please enter a User ID in the sidebar first.")
+        st.error("Please enter a User ID in the sidebar first.")
     else:
         # Show user message immediately
         with st.chat_message("user"):
@@ -388,7 +388,7 @@ if st.session_state["messages"] and \
     col_understand, col_clarify = st.columns(2)
 
     with col_understand:
-        if st.button("✅ I Understand", type="primary", use_container_width=True):
+        if st.button("I Understand", type="primary", use_container_width=True):
             if user_id_input:
                 last_ai_msg = st.session_state["messages"][-1]["content"]
                 save_to_google_sheets(
@@ -405,4 +405,4 @@ if st.session_state["messages"] and \
                 st.error("Please enter a User ID in the sidebar.")
 
     with col_clarify:
-        st.button("🤔 I don't understand", on_click=trigger_clarification, use_container_width=True)
+        st.button("I don't understand", on_click=trigger_clarification, use_container_width=True)
