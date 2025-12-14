@@ -234,10 +234,10 @@ with st.sidebar:
 for message in st.session_state["messages"]:
     if message["role"] == "user":
         with st.chat_message("user"):
-            render_chat_card("Student", "🧑‍🎓", "student-card", message["content"])
+            render_chat_card("Student", "student-card", message["content"])
     else:
         with st.chat_message("assistant"):
-            render_chat_card("Tutor", "🤖", "tutor-card", message["content"])
+            render_chat_card("Tutor", "tutor-card", message["content"])
 
 prompt = st.chat_input("Type your question here...")
 clarification_triggered = st.session_state["auto_execute_clarification"]
