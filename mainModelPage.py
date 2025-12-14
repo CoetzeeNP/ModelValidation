@@ -4,10 +4,9 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from google import genai
 from google.genai import types
-import html  # ✅ NEW
+import html
 
 # --- Configuration ---
-
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
     "gemini-3-pro-preview": "gemini-3-pro-preview"
@@ -19,28 +18,27 @@ st.set_page_config(page_title="Afrikaans Tutor", layout="wide")
 # --- CUSTOM CSS FOR READABILITY & COLORS ---
 st.markdown("""
 <style>
-    /* SHARED CARD STYLES */
+    /* Remove Streamlit's default chat bubble background around your custom cards */
+    div[data-testid="stChatMessageContent"] {
+      background: transparent !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+    div[data-testid="stChatMessage"] {
+      background: transparent !important;
+    }
+
+    /* SHARED CARD STYLES (no avatar layout) */
     .chat-card {
         border-radius: 15px;
         padding: 15px;
         margin-bottom: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        display: flex;
-        align-items: flex-start;
-        gap: 15px;
         width: 100%;
-    }
-
-    /* AVATAR STYLE */
-    .chat-avatar {
-        font-size: 24px;
-        flex-shrink: 0;
-        margin-top: 2px;
     }
 
     /* CONTENT STYLE */
     .chat-content {
-        flex-grow: 1;
         width: 100%;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -66,13 +64,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ✅ NEW: Safe renderer (prevents AI HTML from breaking your card)
-def render_chat_card(who_label: str, avatar: str, css_class: str, text: str):
+# --- Safe renderer (no avatars) ---
+def render_chat_card(who_label: str, css_class: str, text: str):
     safe_text = html.escape(text).replace("\n", "<br>")
     st.markdown(
         f"""
         <div class="chat-card {css_class}">
-            <div class="chat-avatar">{avatar}</div>
             <div class="chat-content">
                 <b>{who_label}:</b><br>{safe_text}
             </div>
@@ -82,12 +79,8 @@ def render_chat_card(who_label: str, avatar: str, css_class: str, text: str):
     )
 
 # --- Google Sheets Connection ---
-
 @st.cache_resource
 def get_sheet_connection():
-    """
-    Authenticates with Google Sheets using Streamlit secrets.
-    """
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
@@ -104,7 +97,6 @@ def get_sheet_connection():
             return sheet
         else:
             return None
-        
     except Exception as e:
         st.error(f"❌ Connection Error: {e}")
         return None
@@ -112,20 +104,19 @@ def get_sheet_connection():
 sheet = get_sheet_connection()
 
 # --- Helper Functions ---
-
 def save_to_google_sheets(user_id, model_name, prompt, response, interaction_type):
     if sheet is None:
         return
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     row_data = [user_id, timestamp, model_name, prompt, response, interaction_type]
-    
+
     try:
         sheet.append_row(row_data)
     except Exception as e:
         st.error(f"Failed to write to Sheet: {e}")
 
-def get_ai_response(model_selection, chat_history, system_instruction_text): 
+def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
         api_key = st.secrets["api_keys"]["google"]
     except KeyError:
@@ -148,7 +139,7 @@ def get_ai_response(model_selection, chat_history, system_instruction_text):
 
             config = types.GenerateContentConfig(
                 temperature=0.7,
-                system_instruction=system_instruction_text 
+                system_instruction=system_instruction_text
             )
 
             response = client.models.generate_content(
@@ -172,9 +163,8 @@ def clear_chat_history():
     st.session_state["feedback_submitted"] = False
 
 # --- Initialization ---
-
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [] 
+    st.session_state["messages"] = []
 
 if "auto_execute_clarification" not in st.session_state:
     st.session_state["auto_execute_clarification"] = False
@@ -197,7 +187,7 @@ st.markdown("---")
 # --- Sidebar Configuration ---
 with st.sidebar:
     st.header("Settings")
-    
+
     st.caption("1. Student Identity")
     user_id_input = st.text_input("👤 Student ID", placeholder="Enter ID here...")
     if st.button("Set ID"):
@@ -205,7 +195,7 @@ with st.sidebar:
             st.toast(f"✅ ID Set: {user_id_input}")
         else:
             st.toast("⚠️ Please type an ID")
-    
+
     st.markdown("---")
 
     st.caption("2. AI Configuration")
@@ -217,20 +207,20 @@ with st.sidebar:
         "Always reference the STOMPI rule when correcting sentence structure."
     )
     system_instruction_input = st.text_area(
-        "🛠️ System Persona", 
+        "🛠️ System Persona",
         value=default_system_msg,
         height=150
     )
-    
+
     st.markdown("---")
-    
+
     if st.button("🗑️ Clear Chat History", type="primary"):
         clear_chat_history()
         st.rerun()
 
 # --- Main Chat Interface ---
 
-# ✅ UPDATED: Display Chat History (safe render)
+# Display chat history (no avatars)
 for message in st.session_state["messages"]:
     if message["role"] == "user":
         with st.chat_message("user"):
@@ -248,14 +238,13 @@ interaction_type = "STANDARD"
 if clarification_triggered:
     if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == "assistant":
         previous_response_text = st.session_state["messages"][-1]["content"]
-        explanation_request = (
-            f"I don't understand the following explanation: "
+        final_prompt = (
+            "I don't understand the following explanation: "
             f"'{previous_response_text}'. "
-            f"Please break it down further."
+            "Please break it down further."
         )
-        final_prompt = explanation_request
         interaction_type = "CLARIFICATION_REQUEST"
-        st.session_state["auto_execute_clarification"] = False 
+        st.session_state["auto_execute_clarification"] = False
     else:
         st.session_state["auto_execute_clarification"] = False
 
@@ -263,48 +252,49 @@ elif prompt:
     final_prompt = prompt
     interaction_type = "STANDARD"
 
-# 3. Process Prompt
+# Process prompt
 if final_prompt:
     if not user_id_input.strip():
         st.error("⚠️ Please enter a User ID in the sidebar first.")
     else:
-        # ✅ UPDATED: Display User Message Immediately
+        # Show user message immediately
         with st.chat_message("user"):
-            render_chat_card("Student", "🧑‍🎓", "student-card", final_prompt)
+            render_chat_card("Student", "student-card", final_prompt)
 
         st.session_state["messages"].append({"role": "user", "content": final_prompt})
         st.session_state["feedback_submitted"] = False
 
-        # ✅ UPDATED: Generate & Display AI Response
+        # Generate & display AI response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 ai_reply = get_ai_response(
-                    selected_label, 
-                    st.session_state["messages"], 
+                    selected_label,
+                    st.session_state["messages"],
                     system_instruction_input
                 )
-                render_chat_card("Tutor", "🤖", "tutor-card", ai_reply)
+                render_chat_card("Tutor", "tutor-card", ai_reply)
 
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
 
+        # Log data
         save_to_google_sheets(
-            user_id_input, 
-            selected_label, 
-            final_prompt, 
-            ai_reply, 
-            interaction_type 
+            user_id_input,
+            selected_label,
+            final_prompt,
+            ai_reply,
+            interaction_type
         )
 
-# 4. Feedback Buttons
+# Feedback buttons
 if st.session_state["messages"] and \
    st.session_state["messages"][-1]["role"] == "assistant" and \
    not st.session_state["feedback_submitted"]:
 
     st.markdown("---")
     st.write("Does this explanation help?")
-    
+
     col_understand, col_clarify = st.columns(2)
-    
+
     with col_understand:
         if st.button("✅ I Understand", type="primary", use_container_width=True):
             if user_id_input:
@@ -312,8 +302,8 @@ if st.session_state["messages"] and \
                 save_to_google_sheets(
                     user_id_input,
                     selected_label,
-                    "User clicked 'I Understand'", 
-                    last_ai_msg[0:50] + "...",     
+                    "User clicked 'I Understand'",
+                    last_ai_msg[0:50] + "...",
                     "UNDERSTOOD"
                 )
                 st.toast("Feedback recorded.")
