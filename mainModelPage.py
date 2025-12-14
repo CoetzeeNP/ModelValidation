@@ -280,7 +280,7 @@ st.markdown("---")
 with st.sidebar:
     st.header("Settings")
 
-    st.caption("1. Student Identity")
+    st.caption("Student Identity")
     user_id_input = st.text_input("Student ID", placeholder="Enter ID here...")
     if st.button("Set ID"):
         if user_id_input:
@@ -290,7 +290,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.caption("2. AI Configuration")
+    st.caption("AI Configuration")
     selected_label = st.selectbox("Select AI Model", options=list(MODEL_MAPPING.keys()))
 
     default_system_msg = (
