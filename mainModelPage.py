@@ -4,6 +4,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from google import genai
 from google.genai import types
+import html
+import re
 
 # --- Configuration ---
 SHEET_NAME = "Gemini Logs"
@@ -62,26 +64,111 @@ st.markdown("""
         color: #b71c1c;
     }
 
+    /* Make lists/code look good inside the cards */
+    .chat-card ul { margin: 0.25rem 0 0.25rem 1.25rem; padding-left: 1rem; }
+    .chat-card li { margin: 0.15rem 0; }
+    .chat-card pre {
+        padding: 10px;
+        border-radius: 10px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        margin: 0.5rem 0;
+    }
+    .chat-card code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
     .stChatInput {
         padding-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Safe renderer (preserves Markdown; no HTML injection from model) ---
+# --- Safe markdown-to-HTML (after escaping) ---
+def safe_markdown_to_html(text: str) -> str:
+    """
+    Converts a small, safe subset of Markdown to HTML AFTER escaping,
+    so model/user cannot inject HTML/JS.
+    Supports:
+      - **bold**
+      - *italics*
+      - bullet lists (* item / - item)
+      - inline code `code`
+      - fenced code blocks ``` ... ```
+    """
+    text = (text or "").replace("\r\n", "\n")
+    escaped = html.escape(text)
+
+    # --- Extract fenced code blocks first ---
+    code_blocks = []
+
+    def _codeblock_repl(m):
+        code_blocks.append(m.group(1))
+        return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
+
+    escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
+
+    # --- Inline code ---
+    escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
+
+    # --- Bold ---
+    escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+
+    # --- Italics (simple) ---
+    escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
+
+    # --- Lists + line breaks ---
+    lines = escaped.split("\n")
+    out = []
+    in_ul = False
+
+    for line in lines:
+        m = re.match(r"^\s*([*\-])\s+(.*)$", line)
+        if m:
+            if not in_ul:
+                out.append("<ul>")
+                in_ul = True
+            out.append(f"<li>{m.group(2)}</li>")
+        else:
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            if line.strip() == "":
+                out.append("<br>")
+            else:
+                out.append(line + "<br>")
+
+    if in_ul:
+        out.append("</ul>")
+
+    html_out = "".join(out)
+
+    # --- Restore fenced code blocks ---
+    for i, code in enumerate(code_blocks):
+        code_html = code.replace("\n", "<br>")
+        html_out = html_out.replace(
+            f"@@CODEBLOCK_{i}@@",
+            f"<pre><code>{code_html}</code></pre>"
+        )
+
+    return html_out
+
+# --- Renderer (keeps text INSIDE the card) ---
 def render_chat_card(who_label: str, css_class: str, text: str):
-    # Wrapper uses HTML for styling only
-    st.markdown(f"<div class='chat-card {css_class}'>", unsafe_allow_html=True)
+    safe_body_html = safe_markdown_to_html(text)
+    safe_label = html.escape(who_label)
 
-    # Label as Markdown
-    st.markdown(f"**{who_label}:**")
-
-    # Message as Markdown (SAFE: no HTML execution)
-    st.markdown(text, unsafe_allow_html=False)
-
-    # Close wrapper
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    st.markdown(
+        f"""
+        <div class="chat-card {css_class}">
+            <div class="chat-content">
+                <b>{safe_label}:</b><br>
+                {safe_body_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # --- Google Sheets Connection ---
 @st.cache_resource
