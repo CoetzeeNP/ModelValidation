@@ -312,5 +312,6 @@ if st.session_state["messages"] and \
             else:
                 st.error("Please enter a User ID in the sidebar.")
 
+
     with col_clarify:
         st.button("🤔 I don't understand", on_click=trigger_clarification, use_container_width=True)
