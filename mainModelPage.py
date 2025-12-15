@@ -138,6 +138,9 @@ def safe_markdown_to_html(text: str) -> str:
 
         # Check for Headers (###)
         m_header = re.match(r"^\s*###\s+(.*)$", line)
+
+        # Check for sub Headers (####)
+        m_header = re.match(r"^\s*####\s+(.*)$", line)
         
         # Check for Lists (* or -)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
