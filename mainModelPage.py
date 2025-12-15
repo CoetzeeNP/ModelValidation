@@ -140,7 +140,7 @@ def safe_markdown_to_html(text: str) -> str:
         m_header = re.match(r"^\s*###\s+(.*)$", line)
 
         # Check for sub Headers (####)
-        m_header = re.match(r"^\s*####\s+(.*)$", line)
+        m_nheader = re.match(r"^\s*####\s+(.*)$", line)
         
         # Check for Lists (* or -)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
@@ -152,6 +152,14 @@ def safe_markdown_to_html(text: str) -> str:
                 in_ul = False
             # Append Header
             out.append(f"<h3>{m_header.group(1)}</h3>")
+
+        if m_nheader:
+            # If we were in a list, close it first
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            # Append Header
+            out.append(f"<h3>{m_nheader.group(1)}</h3>")
             
         elif m_list:
             # Open list if not already open
