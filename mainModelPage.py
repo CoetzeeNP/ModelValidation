@@ -67,15 +67,27 @@ st.markdown("""
     /* Make lists/code look good inside the cards */
     .chat-card ul { margin: 0.25rem 0 0.25rem 1.25rem; padding-left: 1rem; }
     .chat-card li { margin: 0.15rem 0; }
+    
+    /* Code block styling */
     .chat-card pre {
         padding: 10px;
         border-radius: 10px;
         overflow-x: auto;
         white-space: pre-wrap;
         margin: 0.5rem 0;
+        background: rgba(255, 255, 255, 0.5);
     }
     .chat-card code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* NEW: H3 Header Styles */
+    .chat-card h3 {
+        margin-top: 10px;
+        margin-bottom: 5px;
+        font-size: 1.1em;
+        font-weight: 700;
+        line-height: 1.4;
     }
 
     .stChatInput {
@@ -84,56 +96,74 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Safe markdown-to-HTML (after escaping) ---
+# --- Updated Safe markdown-to-HTML Parser ---
 def safe_markdown_to_html(text: str) -> str:
     """
-    Converts a small, safe subset of Markdown to HTML AFTER escaping,
-    so model/user cannot inject HTML/JS.
+    Converts a safe subset of Markdown to HTML.
     Supports:
+      - ### Headers
       - **bold**
       - *italics*
       - bullet lists (* item / - item)
       - inline code `code`
-      - fenced code blocks ``` ... ```
+      - fenced code blocks
     """
     text = (text or "").replace("\r\n", "\n")
     escaped = html.escape(text)
 
-    # --- Extract fenced code blocks first ---
+    # 1. Extract fenced code blocks (preserve them before other regexes run)
     code_blocks = []
-
     def _codeblock_repl(m):
         code_blocks.append(m.group(1))
         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
-
+    
     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
 
-    # --- Inline code ---
+    # 2. Inline code `code`
     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
 
-    # --- Bold ---
+    # 3. Bold **text**
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
 
-    # --- Italics (simple) ---
+    # 4. Italics *text* (looks for single asterisks not surrounded by spaces)
     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
 
-    # --- Lists + line breaks ---
+    # 5. Process Lines (Lists and Headers)
     lines = escaped.split("\n")
     out = []
     in_ul = False
 
     for line in lines:
-        m = re.match(r"^\s*([*\-])\s+(.*)$", line)
-        if m:
-            if not in_ul:
-                out.append("<ul>")
-                in_ul = True
-            out.append(f"<li>{m.group(2)}</li>")
-        else:
+        stripped_line = line.strip()
+
+        # Check for Headers (###)
+        m_header = re.match(r"^\s*###\s+(.*)$", line)
+        
+        # Check for Lists (* or -)
+        m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
+
+        if m_header:
+            # If we were in a list, close it first
             if in_ul:
                 out.append("</ul>")
                 in_ul = False
-            if line.strip() == "":
+            # Append Header
+            out.append(f"<h3>{m_header.group(1)}</h3>")
+            
+        elif m_list:
+            # Open list if not already open
+            if not in_ul:
+                out.append("<ul>")
+                in_ul = True
+            out.append(f"<li>{m_list.group(2)}</li>")
+            
+        else:
+            # Regular line
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            
+            if stripped_line == "":
                 out.append("<br>")
             else:
                 out.append(line + "<br>")
@@ -143,9 +173,9 @@ def safe_markdown_to_html(text: str) -> str:
 
     html_out = "".join(out)
 
-    # --- Restore fenced code blocks ---
+    # 6. Restore fenced code blocks
     for i, code in enumerate(code_blocks):
-        code_html = code.replace("\n", "<br>")
+        code_html = code # Newlines are preserved in pre
         html_out = html_out.replace(
             f"@@CODEBLOCK_{i}@@",
             f"<pre><code>{code_html}</code></pre>"
