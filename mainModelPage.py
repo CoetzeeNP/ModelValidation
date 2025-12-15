@@ -153,7 +153,7 @@ def safe_markdown_to_html(text: str) -> str:
             # Append Header
             out.append(f"<h3>{m_header.group(1)}</h3>")
 
-        if m_nheader:
+        elif m_nheader:
             # If we were in a list, close it first
             if in_ul:
                 out.append("</ul>")
