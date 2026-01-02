@@ -17,6 +17,16 @@ MODEL_MAPPING = {
 # Only these IDs will be allowed to use the app
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 
+# --- Top Image Area ---
+img_col1, img_col2, img_col3 = st.columns(3)
+
+with img_col1:
+    st.image("https://placehold.co/400x75/blue/white?text=UFS Logo", width="stretch")
+with img_col2:
+    st.image("https://placehold.co/400x75/blue/white?text=Humanities", width="stretch")
+with img_col3:
+    st.image("https://placehold.co/400x75/blue/white?text=ICDF", width="stretch")
+
 # --- Page Config (Must be first) ---
 st.set_page_config(page_title="Afrikaans Tutor", layout="wide")
 
