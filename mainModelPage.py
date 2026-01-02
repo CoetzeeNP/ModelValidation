@@ -21,11 +21,11 @@ AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image("https://placehold.co/400x75/blue/white?text=UFS Logo", width="stretch")
+    st.image("ufs_logo.jpg", width="stretch")
 with img_col2:
-    st.image("https://placehold.co/400x75/blue/white?text=Humanities", width="stretch")
+    st.image("humanities_logo.jpg", width="stretch")
 with img_col3:
-    st.image("https://placehold.co/400x75/blue/white?text=ICDF", width="stretch")
+    st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
 
 # --- Page Config (Must be first) ---
 st.set_page_config(page_title="Afrikaans Tutor", layout="wide")
