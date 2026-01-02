@@ -120,7 +120,7 @@ def handle_feedback(understood: bool):
     last_ai_reply = st.session_state["messages"][-1]["content"]
     
     # Log the fact that they clicked the button
-    save_to_google_sheets(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply[:50])
+    save_to_google_sheets(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply)
     
     if not understood:
         clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
