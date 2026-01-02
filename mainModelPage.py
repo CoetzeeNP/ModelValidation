@@ -18,7 +18,7 @@ MODEL_MAPPING = {
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 
 # --- Top Image Area ---
-img_col1, img_col2, img_col3 = st.columns(1)
+img_col3 = st.columns(1)
 with img_col3:
     st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
 
