@@ -85,11 +85,20 @@ def get_sheet_connection():
 
 sheet = get_sheet_connection()
 
-def save_to_google_sheets(user_id, model_name, prompt, response, interaction_type):
+def save_to_google_sheets(user_id, model_name, prompt, full_response, interaction_type):
     if sheet:
         try:
-            sheet.append_row([user_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), model_name, prompt, response, interaction_type])
-        except: pass
+            # Added more specific column mapping
+            sheet.append_row([
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+                user_id, 
+                model_name, 
+                prompt,          # The student's question
+                full_response,   # The complete AI answer
+                interaction_type # e.g., "INITIAL_QUERY" or "CLARIFICATION"
+            ])
+        except Exception as e:
+            print(f"Logging error: {e}")
 
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
@@ -106,20 +115,25 @@ if "authenticated" not in st.session_state: st.session_state["authenticated"] = 
 if "current_user" not in st.session_state: st.session_state["current_user"] = None
 
 def handle_feedback(understood: bool):
-    interaction = "UNDERSTOOD" if understood else "CLARIFICATION_REQUEST"
-    last_reply = st.session_state["messages"][-1]["content"]
+    interaction = "UNDERSTOOD_FEEDBACK" if understood else "CLARIFICATION_REQUESTED"
+    last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
+    last_ai_reply = st.session_state["messages"][-1]["content"]
     
-    save_to_google_sheets(st.session_state["current_user"], selected_label, "Feedback Button Clicked", last_reply[:50], interaction)
+    # Log the fact that they clicked the button
+    save_to_google_sheets(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply[:50])
     
     if not understood:
-        # If they didn't understand, we inject the clarification prompt automatically
-        st.session_state["messages"].append({"role": "user", "content": f"I don't understand the previous explanation: '{last_reply}'. Please break it down further."})
+        clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
+        st.session_state["messages"].append({"role": "user", "content": clarification_prompt})
+        
         ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
+        
+        # --- LOG THE CLARIFICATION RESPONSE ---
+        save_to_google_sheets(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
+        
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
-        # Keep feedback_pending as True because we just gave a new answer
         st.session_state["feedback_pending"] = True
     else:
-        # If they understood, they can now type a new question
         st.session_state["feedback_pending"] = False
     
     st.rerun()
@@ -162,6 +176,17 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
+                
+                # --- NEW LOGGING CALL ---
+                save_to_google_sheets(
+                    st.session_state["current_user"], 
+                    selected_label, 
+                    prompt, 
+                    reply, 
+                    "INITIAL_QUERY"
+                )
+                # ------------------------
+
                 st.session_state["messages"].append({"role": "assistant", "content": reply})
                 st.session_state["feedback_pending"] = True
                 st.rerun()
