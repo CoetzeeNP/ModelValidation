@@ -65,20 +65,15 @@ def safe_markdown_to_html(text: str) -> str:
     in_ul = False
 
     for line in lines:
-        stripped = line.strip()
-
-        # 1. Broadened Break Logic: Detects *, ***, ---, or ___
-        # These are all common ways the AI generates a horizontal line
-        m_hr = re.match(r"^\s*([\*\-_])\1{0,}\s*$", stripped)
-
+        # 1. Detect the "Break" (a line that is just an asterisk)
+        m_hr = re.match(r"^\s*\*\s*$", line)
         m_header = re.match(r"^\s*###\s+(.*)$", line)
-
-        # 2. Improved List Logic: Only match if there is actually text after the bullet
-        m_list = re.match(r"^\s*([*\-])\s+(.+)$", line)
+        m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
 
         if m_hr:
             if in_ul: out.append("</ul>"); in_ul = False
-            out.append("<hr style='border: 0; border-top: 1px solid #ccc; margin: 15px 0;'>")
+            # This creates the visible horizontal line
+            out.append("<hr style='border: 1px solid #ddd; margin: 10px 0;'>")
 
         elif m_header:
             if in_ul: out.append("</ul>"); in_ul = False
@@ -90,7 +85,7 @@ def safe_markdown_to_html(text: str) -> str:
 
         else:
             if in_ul: out.append("</ul>"); in_ul = False
-            if stripped == "":
+            if line.strip() == "":
                 out.append("<br>")
             else:
                 out.append(line + "<br>")
