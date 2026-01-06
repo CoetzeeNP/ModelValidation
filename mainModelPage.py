@@ -13,6 +13,8 @@ MODEL_MAPPING = {
     "gemini-3-pro-preview": "gemini-3-pro-preview"
 }
 
+# --- AUTHORIZED STUDENT NUMBERS ---
+# Only these IDs will be allowed to use the app
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 
 # --- Top Image Area ---
@@ -46,59 +48,35 @@ st.markdown("""
 # --- Updated Safe markdown-to-HTML Parser ---
 def safe_markdown_to_html(text: str) -> str:
     text = (text or "").replace("\r\n", "\n")
-
-    # 1. Escape HTML first to prevent XSS
     escaped = html.escape(text)
-
-    # 2. Handle Code Blocks
     code_blocks = []
-
     def _codeblock_repl(m):
         code_blocks.append(m.group(1))
         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
-
     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
-
-    # 3. Inline formatting (Bold, Italic, Inline Code)
     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
-
     lines = escaped.split("\n")
     out = []
     in_ul = False
-
     for line in lines:
-        stripped = line.strip()
         m_header = re.match(r"^\s*###\s+(.*)$", line)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
-        m_hr = re.match(r"^\s*([\*\-]){1,}\s*$", line)
-
         if m_header:
             if in_ul: out.append("</ul>"); in_ul = False
             out.append(f"<h3>{m_header.group(1)}</h3>")
-
-        elif m_hr:
-            if in_ul: out.append("</ul>"); in_ul = False
-            out.append("<hr>")
-
         elif m_list:
             if not in_ul: out.append("<ul>"); in_ul = True
             out.append(f"<li>{m_list.group(2)}</li>")
-
         else:
             if in_ul: out.append("</ul>"); in_ul = False
-            if stripped == "":
-                out.append("<br>")
-            else:
-                out.append(line + "<br>")
-
+            if line.strip() == "": out.append("<br>")
+            else: out.append(line + "<br>")
     if in_ul: out.append("</ul>")
-
     html_out = "".join(out)
     for i, code in enumerate(code_blocks):
         html_out = html_out.replace(f"@@CODEBLOCK_{i}@@", f"<pre><code>{code}</code></pre>")
-
     return html_out
 
 def render_chat_card(who_label: str, css_class: str, text: str):
