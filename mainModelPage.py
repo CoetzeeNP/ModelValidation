@@ -149,9 +149,6 @@ def handle_feedback(understood: bool):
         st.session_state["feedback_pending"] = True
     else:
         st.session_state["feedback_pending"] = False
-    
-    st.rerun()
-
 
 with st.sidebar:
     st.header("Afrikaans Assistant Menu")
