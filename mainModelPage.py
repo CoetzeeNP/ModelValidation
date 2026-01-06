@@ -230,4 +230,4 @@ else:
         st.info("Please tell your tutor if you understood the explanation above:")
         c1, c2 = st.columns(2)
         with c1: st.button("I Understand", on_click=handle_feedback, args=(True,), use_container_width=True, type="primary")
-        with c2: st.button("I need more help.", on_click=handle_feedback, args=(False,), use_container_width=True, type="secondary")
+        with c2: st.button("I need more help.", on_click=handle_feedback, args=(False,), use_container_width=True, type="tertiary")
