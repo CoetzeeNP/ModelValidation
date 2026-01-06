@@ -225,6 +225,41 @@ else:
                 st.session_state["feedback_pending"] = True
                 st.rerun()
 
+    st.markdown("""
+        <style>
+        /* Target all buttons within the columns */
+        div[data-testid="stColumn"] button {
+            border-radius: 20px;
+            height: 3em;
+            transition: all 0.3s ease;
+        }
+
+        /* Target the 'I understand!' button by its label */
+        div[data-testid="stColumn"]:nth-of-type(1) button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(1) button:hover {
+            background-color: #218838;
+            border: none;
+            color: white;
+        }
+
+        /* Target the 'I need more help!' button */
+        div[data-testid="stColumn"]:nth-of-type(2) button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(2) button:hover {
+            background-color: #c82333;
+            border: none;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
     # Feedback Buttons
     if st.session_state["feedback_pending"]:
         st.info("Please tell your tutor if you understood the explanation above:")
