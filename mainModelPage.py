@@ -179,8 +179,8 @@ with st.sidebar:
             st.link_button("Feedback", "https://forms.office.com/your-link", use_container_width=True)
 
     if st.session_state["authenticated"]:
-        st.markdown("---")
         st.write(f"**Logged in as:** {st.session_state['current_user']}")
+        st.markdown("---")
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
         system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
 
