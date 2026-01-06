@@ -226,14 +226,6 @@ else:
                 st.rerun()
 
     st.markdown("""
-        <style>
-        /* Target all buttons within the columns */
-        div[data-testid="stColumn"] button {
-            border-radius: 20px;
-            height: 3em;
-            transition: all 0.3s ease;
-        }
-
         /* Target the 'I understand!' button by its label */
         div[data-testid="stColumn"]:nth-of-type(1) button {
             background-color: #28a745;
