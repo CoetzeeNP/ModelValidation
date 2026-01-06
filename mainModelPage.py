@@ -72,7 +72,7 @@ def safe_markdown_to_html(text: str) -> str:
         stripped = line.strip()
         m_header = re.match(r"^\s*###\s+(.*)$", line)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
-        m_hr = re.match(r"^\s*(\*)\s*$", line)
+        m_hr = re.match(r"^\s*([\*\-]){1,}\s*$", line)
 
         if m_header:
             if in_ul: out.append("</ul>"); in_ul = False
