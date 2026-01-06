@@ -226,6 +226,7 @@ else:
                 st.rerun()
 
     st.markdown("""
+        <style>
         /* Target the 'I understand!' button by its label */
         div[data-testid="stColumn"]:nth-of-type(1) button {
             background-color: #28a745;
