@@ -59,30 +59,37 @@ def safe_markdown_to_html(text: str) -> str:
     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
+
     lines = escaped.split("\n")
     out = []
     in_ul = False
-    for line in lines:
-        # Check if the line is JUST an asterisk (potential break)
-        # If it is, we skip it entirely
-        if re.match(r"^\s*\*\s*$", line):
-            continue
 
+    for line in lines:
+        # 1. Detect the "Break" (a line that is just an asterisk)
+        m_hr = re.match(r"^\s*\*\s*$", line)
         m_header = re.match(r"^\s*###\s+(.*)$", line)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
 
-        if m_header:
+        if m_hr:
+            if in_ul: out.append("</ul>"); in_ul = False
+            # This creates the visible horizontal line
+            out.append("<hr style='border: 1px solid #ddd; margin: 10px 0;'>")
+
+        elif m_header:
             if in_ul: out.append("</ul>"); in_ul = False
             out.append(f"<h3>{m_header.group(1)}</h3>")
+
         elif m_list:
             if not in_ul: out.append("<ul>"); in_ul = True
             out.append(f"<li>{m_list.group(2)}</li>")
+
         else:
             if in_ul: out.append("</ul>"); in_ul = False
             if line.strip() == "":
                 out.append("<br>")
             else:
                 out.append(line + "<br>")
+
     if in_ul: out.append("</ul>")
     html_out = "".join(out)
     for i, code in enumerate(code_blocks):
