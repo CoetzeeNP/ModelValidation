@@ -152,30 +152,37 @@ def handle_feedback(understood: bool):
 
 
 with st.sidebar:
-    st.header("Login")
-    u_id = st.text_input("Enter Student ID", type="password")
-    if st.button("Login"):
-        if u_id in AUTHORIZED_STUDENT_IDS:
-            st.session_state["authenticated"] = True
-            st.session_state["current_user"] = u_id
-            st.success("Welcome!")
-            st.rerun()
-        else:
-            st.error("Invalid Student ID")
+    st.header("Authentication")
+
+    if not st.session_state["authenticated"]:
+        u_id = st.text_input("Enter Student ID", type="password")
+        # Placing login button in a column to keep it consistent
+        if st.button("Login", use_container_width=True):
+            if u_id in AUTHORIZED_STUDENT_IDS:
+                st.session_state["authenticated"] = True
+                st.session_state["current_user"] = u_id
+                st.success("Welcome!")
+                st.rerun()
+            else:
+                st.error("Invalid Student ID")
+    else:
+        # Create two columns for the buttons
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Logout", use_container_width=True):
+                st.session_state.clear()
+                st.rerun()
+
+        with col2:
+            # Your new MS Form button
+            st.link_button("Feedback", "https://forms.office.com/your-link", use_container_width=True)
 
     if st.session_state["authenticated"]:
         st.markdown("---")
+        st.write(f"**Logged in as:** {st.session_state['current_user']}")
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
         system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
-
-        # --- NEW FEEDBACK BUTTON ---
-        st.markdown("### Support & Feedback")
-        st.link_button("📋 Open Feedback Form", "https://forms.office.com/r/your_unique_id", use_container_width=True)
-
-        st.markdown("---")
-        if st.button("Logout"):
-            st.session_state.clear()
-            st.rerun()
 
 # --- Main App ---
 if not st.session_state["authenticated"]:
