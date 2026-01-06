@@ -7,6 +7,8 @@ from google.genai import types
 import html
 import re
 
+from streamlit.testing.v1.element_tree import Info
+
 # --- Configuration ---
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
@@ -201,6 +203,7 @@ else:
         role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
         render_chat_card(role, card, msg["content"])
 
+    st.info("You are welcome to start chatting with the Assistant using the text box below!")
     # Disable input if feedback is needed
     input_placeholder = "Please give feedback on the last answer to continue..." if st.session_state["feedback_pending"] else "Ask your Afrikaans question..."
     prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
