@@ -152,7 +152,7 @@ def handle_feedback(understood: bool):
 
 
 with st.sidebar:
-    st.header("Authentication")
+    st.header("Afrikaans Assistant Menu")
 
     if not st.session_state["authenticated"]:
         u_id = st.text_input("Enter Student ID", type="password")
