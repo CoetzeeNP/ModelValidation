@@ -229,5 +229,5 @@ else:
     if st.session_state["feedback_pending"]:
         st.info("Please tell your tutor if you understood the explanation above:")
         c1, c2 = st.columns(2)
-        with c1: st.button("I Understand", on_click=handle_feedback, args=(True,), use_container_width=True)
-        with c2: st.button("I need more help.", on_click=handle_feedback, args=(False,), use_container_width=True)
+        with c1: st.button("I understand!", on_click=handle_feedback, args=(True,), use_container_width=True)
+        with c2: st.button("I need more help!", on_click=handle_feedback, args=(False,), use_container_width=True)
