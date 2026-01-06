@@ -225,29 +225,9 @@ else:
                 st.session_state["feedback_pending"] = True
                 st.rerun()
 
-    st.markdown("""
-    <style>
-        /* Target the 'I Understand' button specifically */
-        button div p:contains("I Understand") {
-            color: white;
-        }
-        div[data-testid="stButton"] > button:has(div p:contains("I Understand")) {
-            background-color: #28a745; /* Green */
-            border-color: #28a745;
-        }
-
-        /* Target the 'I need more help' button specifically */
-        div[data-testid="stButton"] > button:has(div p:contains("I need more help")) {
-            background-color: #dc3545; /* Red */
-            border-color: #dc3545;
-            color: white;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
     # Feedback Buttons
     if st.session_state["feedback_pending"]:
         st.info("Please tell your tutor if you understood the explanation above:")
         c1, c2 = st.columns(2)
-        with c1: st.button("I Understand", on_click=handle_feedback, args=(True,), use_container_width=True)
-        with c2: st.button("I need more help.", on_click=handle_feedback, args=(False,), use_container_width=True)
+        with c1: st.button("I Understand", on_click=handle_feedback, args=(True,), use_container_width=True, type="primary")
+        with c2: st.button("I need more help.", on_click=handle_feedback, args=(False,), use_container_width=True, type="secondary")
