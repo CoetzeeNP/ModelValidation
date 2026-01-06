@@ -150,7 +150,7 @@ def handle_feedback(understood: bool):
     
     st.rerun()
 
-# --- UI ---
+
 with st.sidebar:
     st.header("Login")
     u_id = st.text_input("Enter Student ID", type="password")
@@ -167,6 +167,12 @@ with st.sidebar:
         st.markdown("---")
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
         system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
+
+        # --- NEW FEEDBACK BUTTON ---
+        st.markdown("### Support & Feedback")
+        st.link_button("📋 Open Feedback Form", "https://forms.office.com/r/your_unique_id", use_container_width=True)
+
+        st.markdown("---")
         if st.button("Logout"):
             st.session_state.clear()
             st.rerun()
