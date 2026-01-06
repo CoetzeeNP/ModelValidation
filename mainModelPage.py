@@ -177,16 +177,12 @@ if not st.session_state["authenticated"]:
     # Create the container and add filler text
     with st.container():
         st.markdown("### Access Restricted")
-        st.write(
-            """
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-            Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-            nisi ut aliquip ex ea commodo consequat.
-            """
-        )
         # Optional: Add a visual placeholder
-        st.info("Additional dashboard features will appear here once you are verified.")
+        st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
+                "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+                " laboris nisi ut aliquip ex ea commodo consequat."
+                ""
+                "Additional dashboard features will appear here once you are verified.")
 else:
     for msg in st.session_state["messages"]:
         role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
