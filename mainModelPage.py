@@ -50,9 +50,11 @@ def safe_markdown_to_html(text: str) -> str:
     text = (text or "").replace("\r\n", "\n")
     escaped = html.escape(text)
     code_blocks = []
+
     def _codeblock_repl(m):
         code_blocks.append(m.group(1))
         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
+
     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
@@ -63,16 +65,25 @@ def safe_markdown_to_html(text: str) -> str:
     for line in lines:
         m_header = re.match(r"^\s*###\s+(.*)$", line)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
+
+        # --- Added Horizontal Rule / Break Logic ---
+        m_hr = re.match(r"^\s*\*\s*$", line)
+
         if m_header:
             if in_ul: out.append("</ul>"); in_ul = False
             out.append(f"<h3>{m_header.group(1)}</h3>")
+        elif m_hr:
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append("<hr>")
         elif m_list:
             if not in_ul: out.append("<ul>"); in_ul = True
             out.append(f"<li>{m_list.group(2)}</li>")
         else:
             if in_ul: out.append("</ul>"); in_ul = False
-            if line.strip() == "": out.append("<br>")
-            else: out.append(line + "<br>")
+            if line.strip() == "":
+                out.append("<br>")
+            else:
+                out.append(line + "<br>")
     if in_ul: out.append("</ul>")
     html_out = "".join(out)
     for i, code in enumerate(code_blocks):
