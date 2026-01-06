@@ -174,13 +174,13 @@ with st.sidebar:
 # --- Main App ---
 if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
-    st.container("jsakjdkjashdjkahskdjhakjshdkjahsdjkhaksj"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
-                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+    st.container("jsakjdkjashdjkahskdjhakjshdkjahsdjkhaksj" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh" +
                  "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
                  )
 else:
