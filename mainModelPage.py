@@ -174,6 +174,15 @@ with st.sidebar:
 # --- Main App ---
 if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
+    st.container("jsakjdkjashdjkahskdjhakjshdkjahsdjkhaksj"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 "hdkjhaskjdhkjashdjkhasjkhdkjashdkjhaksdh"
+                 )
 else:
     for msg in st.session_state["messages"]:
         role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
