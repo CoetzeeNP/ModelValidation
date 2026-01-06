@@ -63,18 +63,17 @@ def safe_markdown_to_html(text: str) -> str:
     out = []
     in_ul = False
     for line in lines:
+        # Check if the line is JUST an asterisk (potential break)
+        # If it is, we skip it entirely
+        if re.match(r"^\s*\*\s*$", line):
+            continue
+
         m_header = re.match(r"^\s*###\s+(.*)$", line)
         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
-
-        # --- Added Horizontal Rule / Break Logic ---
-        m_hr = re.match(r"^\s*\*\s*$", line)
 
         if m_header:
             if in_ul: out.append("</ul>"); in_ul = False
             out.append(f"<h3>{m_header.group(1)}</h3>")
-        elif m_hr:
-            if in_ul: out.append("</ul>"); in_ul = False
-            out.append("<hr>")
         elif m_list:
             if not in_ul: out.append("<ul>"); in_ul = True
             out.append(f"<li>{m_list.group(2)}</li>")
