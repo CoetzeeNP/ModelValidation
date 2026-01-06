@@ -180,7 +180,7 @@ if not st.session_state["authenticated"]:
         # Optional: Add a visual placeholder
         st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
                 "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
-                " laboris nisi ut aliquip ex ea commodo consequat."
+                " laboris nisi ut aliquip ex ea commodo consequat.\n\n "
                 ""
                 "Additional dashboard features will appear here once you are verified.")
 else:
