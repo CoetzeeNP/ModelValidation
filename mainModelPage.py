@@ -18,7 +18,7 @@ header_container = st.container()
 with header_container:
     st.image("combined_logo.jpg", width="stretch")
 
-st.title("Afrikaans Generative Assistant")
+st.title("Afrikaans Generative Assistant",  width="stretch")
 
 st.markdown("""
 <style>
