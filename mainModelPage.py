@@ -143,7 +143,7 @@ def handle_feedback(understood: bool):
 
 with st.sidebar:
     st.header("Afrikaans Assistant Menu")
-
+    st.write(f"**Logged in as:** {st.session_state['current_user']}")
     if not st.session_state["authenticated"]:
         u_id = st.text_input("Enter Student ID", type="password")
         # Placing login button in a column to keep it consistent
