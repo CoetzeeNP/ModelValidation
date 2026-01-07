@@ -15,20 +15,10 @@ MODEL_MAPPING = {
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 
 header_container = st.container()
-
-# 3. Place your columns inside that container
 with header_container:
     st.image("combined_logo.jpg", width="stretch")
-    #img_col1, img_col2, img_col3 = st.columns(3)
 
-   # with img_col1:
-   #     st.image("ufs_logo.jpg", width="stretch")
-   # with img_col2:
-   #     st.image("humanities_logo.jpg", width="stretch")
-    #   with img_col3:
-   #     st.image("icdf_logo.jpg", width="stretch")
-
-st.set_page_config(page_title="Afrikaans Generative Assistant", layout="wide")
+st.title("Afrikaans Generative Assistant")
 
 st.markdown("""
 <style>
