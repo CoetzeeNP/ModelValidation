@@ -25,7 +25,7 @@ with header_container:
     with img_col2:
         st.image("humanities_logo.jpg", width="stretch")
     with img_col3:
-        st.image("icdf.jpg", width="stretch")
+        st.image("icdf_logo.jpg", width="stretch")
 
 st.set_page_config(page_title="Afrikaans Generative Assistant", layout="wide")
 
