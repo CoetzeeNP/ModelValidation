@@ -16,23 +16,6 @@ AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 
 header_container = st.container()
 
-# 2. Inject CSS that only targets columns within a container
-# We use the 'div.stVerticalBlock' and 'div[data-testid="stColumn"]' selectors
-st.markdown(
-    """
-    <style>
-    /* Target only columns within a specific block */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stColumn"] {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # 3. Place your columns inside that container
 with header_container:
     img_col1, img_col2, img_col3 = st.columns(3)
