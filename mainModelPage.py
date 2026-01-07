@@ -38,11 +38,11 @@ with header_container:
     img_col1, img_col2, img_col3 = st.columns(3)
 
     with img_col1:
-        st.image("ufs_logo.jpg", stretch=True)
+        st.image("ufs_logo.jpg", width="stretch")
     with img_col2:
-        st.image("humanities_logo.jpg", stretch=True)
+        st.image("humanities_logo.jpg", width="stretch")
     with img_col3:
-        st.image("interdisciplinary_centre_for_digital_futures.jpg", stretch=True)
+        st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
 
 st.set_page_config(page_title="Afrikaans Generative Assistant", layout="wide")
 
