@@ -17,6 +17,9 @@ AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
 header_container = st.container()
 with header_container:
     st.image("combined_logo.jpg", width="stretch")
+    st.title("Generative Afrikaans Assistant")
+
+st.set_page_config(layout="wide")
 
 
 st.markdown("""
