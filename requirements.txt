@@ -2,3 +2,4 @@ streamlit
 google-genai
 gspread
 google-auth
+pillow
