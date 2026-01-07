@@ -23,7 +23,7 @@ def load_and_resize(image_path, target_height=200):
     return img.resize((target_width, target_height))
 
 # Set a consistent height for all logos
-h = 250
+h = 300
 
 img_col1, img_col2, img_col3 = st.columns(3)
 
