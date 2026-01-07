@@ -23,16 +23,16 @@ def load_and_resize(image_path, target_height=200):
     return img.resize((target_width, target_height))
 
 # Set a consistent height for all logos
-h = 300
+h = 250
 
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image(load_and_resize("ufs_logo.jpg", h), width=True)
+    st.image(load_and_resize("ufs_logo.jpg", h), use_container_width=True)
 with img_col2:
-    st.image(load_and_resize("humanities_logo.jpg", h), width=True)
+    st.image(load_and_resize("humanities_logo.jpg", h), use_container_width=True)
 with img_col3:
-    st.image(load_and_resize("interdisciplinary_centre_for_digital_futures.jpg", h), width=True)
+    st.image(load_and_resize("interdisciplinary_centre_for_digital_futures.jpg", h), use_container_width=True)
 
 st.markdown("""
 <style>
