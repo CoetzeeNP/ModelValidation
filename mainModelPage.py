@@ -7,34 +7,24 @@ from google.genai import types
 import html
 import re
 
-from streamlit.testing.v1.element_tree import Info
-
-# --- Configuration ---
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
     "gemini-3-pro-preview": "gemini-3-pro-preview"
 }
 
-# --- AUTHORIZED STUDENT NUMBERS ---
-# Only these IDs will be allowed to use the app
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
-
-# --- Top Image Area ---
 
 img_col1, img_col2, img_col3 = st.columns(3)
 
 with img_col1:
-    st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
+    st.image("ufs_logo.png", width="stretch")
 with img_col2:
-    st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
+    st.image("humanities_logo.png", width="stretch")
 with img_col3:
     st.image("interdisciplinary_centre_for_digital_futures.jpg", width="stretch")
 
-
-# --- Page Config (Must be first) ---
 st.set_page_config(page_title="Afrikaans Generative Assistant", layout="wide")
 
-# --- CUSTOM CSS (Kept from your original) ---
 st.markdown("""
 <style>
     div[data-testid="stChatMessageContent"] { background: transparent !important; padding: 0 !important; }
@@ -47,7 +37,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Updated Safe markdown-to-HTML Parser ---
 def safe_markdown_to_html(text: str) -> str:
     text = (text or "").replace("\r\n", "\n")
     escaped = html.escape(text)
@@ -85,7 +74,6 @@ def render_chat_card(who_label: str, css_class: str, text: str):
     safe_body_html = safe_markdown_to_html(text)
     st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br>{safe_body_html}</div></div>', unsafe_allow_html=True)
 
-# --- Google Sheets Connection ---
 @st.cache_resource
 def get_sheet_connection():
     try:
@@ -102,14 +90,14 @@ sheet = get_sheet_connection()
 def save_to_google_sheets(user_id, model_name, prompt, full_response, interaction_type):
     if sheet:
         try:
-            # Added more specific column mapping
+
             sheet.append_row([
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
                 user_id, 
                 model_name, 
-                prompt,          # The student's question
-                full_response,   # The complete AI answer
-                interaction_type # e.g., "INITIAL_QUERY" or "CLARIFICATION"
+                prompt,
+                full_response,
+                interaction_type
             ])
         except Exception as e:
             print(f"Logging error: {e}")
@@ -122,18 +110,18 @@ def get_ai_response(model_selection, chat_history, system_instruction_text):
         return response.text
     except Exception as e: return f"Error: {str(e)}"
 
-# --- State Management ---
+
 if "messages" not in st.session_state: st.session_state["messages"] = []
 if "feedback_pending" not in st.session_state: st.session_state["feedback_pending"] = False
 if "authenticated" not in st.session_state: st.session_state["authenticated"] = False
 if "current_user" not in st.session_state: st.session_state["current_user"] = None
 
+
 def handle_feedback(understood: bool):
     interaction = "UNDERSTOOD_FEEDBACK" if understood else "CLARIFICATION_REQUESTED"
     last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
-    
-    # Log the fact that they clicked the button
+
     save_to_google_sheets(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply)
     
     if not understood:
@@ -141,8 +129,7 @@ def handle_feedback(understood: bool):
         st.session_state["messages"].append({"role": "user", "content": clarification_prompt})
         
         ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
-        
-        # --- LOG THE CLARIFICATION RESPONSE ---
+
         save_to_google_sheets(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
         
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
@@ -188,7 +175,7 @@ if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
     # Create the container and add filler text
     with st.container():
-        st.markdown("### Access Restricted")
+        st.markdown("### You need to be signed in to get access to the Afrikaans Assistant!")
         # Optional: Add a visual placeholder
         st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
                 "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
@@ -255,7 +242,7 @@ else:
 
     # Feedback Buttons
     if st.session_state["feedback_pending"]:
-        st.info("Please tell your tutor if you understood the explanation above:")
+        st.info("Please indicate if you understood the generated response above:")
         c1, c2 = st.columns(2)
         with c1: st.button("I understand!", on_click=handle_feedback, args=(True,), use_container_width=True)
         with c2: st.button("I need more help!", on_click=handle_feedback, args=(False,), use_container_width=True)
