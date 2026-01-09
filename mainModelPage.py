@@ -77,17 +77,24 @@ def render_chat_card(who_label: str, css_class: str, text: str):
 @st.cache_resource
 def get_firebase_connection():
     try:
-        # Check if already initialized to avoid ValueError
         if not firebase_admin._apps:
-            # You'll need to add 'firebase_service_account' to st.secrets
-            # and 'firebase_db_url' which looks like: https://your-project-id.firebaseio.com/
-            cred = credentials.Certificate(st.secrets["firebase_service_account"])
+            # 1. Convert the AttrDict to a standard Python dict
+            cred_info = dict(st.secrets["firebase_service_account"])
+
+            # 2. Fix the private key formatting (essential for TOML strings)
+            cred_info["private_key"] = cred_info["private_key"].replace("\\n", "\n")
+
+            # 3. Initialize the SDK
+            cred = credentials.Certificate(cred_info)
             firebase_admin.initialize_app(cred, {
                 'databaseURL': st.secrets["firebase_db_url"]
             })
-        return db.reference("gemini_logs")
+
+        # 4. Return the reference to your 'logs' node
+        return db.reference("logs")
+
     except Exception as e:
-        st.error(f"Firebase Connection Error: {e}")
+        st.error(f"Firebase Init Error: {e}")
         return None
 
 db_ref = get_firebase_connection()
