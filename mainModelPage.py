@@ -1,5 +1,7 @@
 import streamlit as st
 import gspread
+import firebase_admin
+from firebase_admin import credentials, db
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 from google import genai
@@ -12,7 +14,7 @@ MODEL_MAPPING = {
     "gemini-3-pro-preview": "gemini-3-pro-preview"
 }
 
-AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999"]
+AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999", ""]
 
 header_container = st.container()
 with header_container:
@@ -72,33 +74,42 @@ def render_chat_card(who_label: str, css_class: str, text: str):
     safe_body_html = safe_markdown_to_html(text)
     st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br>{safe_body_html}</div></div>', unsafe_allow_html=True)
 
+# --- Updated Firebase Connection ---
 @st.cache_resource
-def get_sheet_connection():
+def get_firebase_connection():
     try:
-        if "gcp_service_account" in st.secrets:
-            creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"])
-            return gspread.authorize(creds).open(SHEET_NAME).sheet1
-        return None
+        # Check if already initialized to avoid ValueError
+        if not firebase_admin._apps:
+            # You'll need to add 'firebase_service_account' to st.secrets
+            # and 'firebase_db_url' which looks like: https://your-project-id.firebaseio.com/
+            cred = credentials.Certificate(st.secrets["firebase_service_account"])
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': st.secrets["firebase_db_url"]
+            })
+        return db.reference("gemini_logs")
     except Exception as e:
-        st.error(f"Connection Error: {e}")
+        st.error(f"Firebase Connection Error: {e}")
         return None
 
-sheet = get_sheet_connection()
+db_ref = get_firebase_connection()
 
-def save_to_google_sheets(user_id, model_name, prompt, full_response, interaction_type):
-    if sheet:
+# --- Updated Logging Function ---
+def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_type):
+    if db_ref:
         try:
-
-            sheet.append_row([
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
-                user_id, 
-                model_name, 
-                prompt,
-                full_response,
-                interaction_type
-            ])
+            # push() creates a unique timestamp-based ID for every entry
+            db_ref.push({
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "user_id": user_id,
+                "model_name": model_name,
+                "prompt": prompt_,
+                "response": full_response,
+                "interaction_type": interaction_type
+            })
         except Exception as e:
             print(f"Logging error: {e}")
+
+# Replace calls to save_to_google_sheets with save_to_firebase
 
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
@@ -120,7 +131,7 @@ def handle_feedback(understood: bool):
     last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
 
-    save_to_google_sheets(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply)
+    save_to_firebase(st.session_state["current_user"], selected_label, "FEEDBACK_EVENT", interaction, last_ai_reply)
     
     if not understood:
         clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
@@ -128,7 +139,7 @@ def handle_feedback(understood: bool):
         
         ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
 
-        save_to_google_sheets(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
+        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
         
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
         st.session_state["feedback_pending"] = True
@@ -196,7 +207,7 @@ else:
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
                 
                 # --- NEW LOGGING CALL ---
-                save_to_google_sheets(
+                save_to_firebase(
                     st.session_state["current_user"], 
                     selected_label, 
                     prompt, 
