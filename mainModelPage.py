@@ -82,7 +82,7 @@ def get_firebase_connection():
         if not firebase_admin._apps:
             # You'll need to add 'firebase_service_account' to st.secrets
             # and 'firebase_db_url' which looks like: https://your-project-id.firebaseio.com/
-            cred = credentials.Certificate(st.secrets["firebase_service_account"])
+            cred = credentials.Certificate(st.secrets["google"])
             firebase_admin.initialize_app(cred, {
                 'databaseURL': st.secrets["firebase_db_url"]
             })
