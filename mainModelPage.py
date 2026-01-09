@@ -74,46 +74,55 @@ def render_chat_card(who_label: str, css_class: str, text: str):
     st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br>{safe_body_html}</div></div>', unsafe_allow_html=True)
 
 # --- Updated Firebase Connection ---
+# --- Updated Firebase Connection ---
 @st.cache_resource
 def get_firebase_connection():
     try:
         if not firebase_admin._apps:
-            # 1. Convert the AttrDict to a standard Python dict
             cred_info = dict(st.secrets["firebase_service_account"])
-
-            # 2. Fix the private key formatting (essential for TOML strings)
             cred_info["private_key"] = cred_info["private_key"].replace("\\n", "\n")
 
-            # 3. Initialize the SDK
+            # Ensure the URL is clean
+            db_url = st.secrets["firebase_db_url"].strip()
+
             cred = credentials.Certificate(cred_info)
             firebase_admin.initialize_app(cred, {
-                'databaseURL': st.secrets["firebase_db_url"]
+                'databaseURL': db_url
             })
 
-        # 4. Return the reference to your 'logs' node
-        return db.reference("logs")
-
+        # Return the root reference
+        return db.reference("/")
     except Exception as e:
         st.error(f"Firebase Init Error: {e}")
         return None
 
+
 db_ref = get_firebase_connection()
 
-# --- Updated Logging Function ---
+
+# --- Updated Logging Function with Debugging ---
 def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_type):
     if db_ref:
         try:
-            # push() creates a unique timestamp-based ID for every entry
-            db_ref.push({
+            # We explicitly target the 'logs' child
+            log_entry = db_ref.child("logs").push({
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "user_id": user_id,
+                "user_id": str(user_id),
                 "model_name": model_name,
-                "prompt": prompt_,
-                "response": full_response,
+                "prompt": str(prompt_),
+                "response": str(full_response),
                 "interaction_type": interaction_type
             })
+            # This print will show up in your Streamlit Cloud logs/terminal
+            print(f"✅ Firebase Write Success: {log_entry.key}")
+            return True
         except Exception as e:
-            print(f"Logging error: {e}")
+            st.error(f"Firebase Write Error: {e}")
+            print(f"❌ Firebase Write Failed: {e}")
+            return False
+    else:
+        print("❌ Firebase Reference is missing.")
+        return False
 
 # Replace calls to save_to_google_sheets with save_to_firebase
 
