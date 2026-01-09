@@ -1,5 +1,4 @@
 import streamlit as st
-import gspread
 import firebase_admin
 from firebase_admin import credentials, db
 from google.oauth2.service_account import Credentials
