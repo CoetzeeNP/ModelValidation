@@ -23,54 +23,54 @@ st.title("Generative Afrikaans Assistant")
 st.set_page_config(layout="wide")
 
 
-st.markdown("""
-<style>
-    div[data-testid="stChatMessageContent"] { background: transparent !important; padding: 0 !important; }
-    div[data-testid="stChatMessage"] { background: transparent !important; }
-    div[data-testid="stChatMessageAvatar"] { display: none !important; }
-    .chat-card { border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; }
-    .chat-content { width: 100%; overflow-wrap: anywhere; word-break: break-word; }
-    .student-card { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
-    .tutor-card { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
-</style>
-""", unsafe_allow_html=True)
-
-def safe_markdown_to_html(text: str) -> str:
-    text = (text or "").replace("\r\n", "\n")
-    escaped = html.escape(text)
-    code_blocks = []
-    def _codeblock_repl(m):
-        code_blocks.append(m.group(1))
-        return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
-    escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
-    escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
-    escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
-    escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
-    lines = escaped.split("\n")
-    out = []
-    in_ul = False
-    for line in lines:
-        m_header = re.match(r"^\s*###\s+(.*)$", line)
-        m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
-        if m_header:
-            if in_ul: out.append("</ul>"); in_ul = False
-            out.append(f"<h3>{m_header.group(1)}</h3>")
-        elif m_list:
-            if not in_ul: out.append("<ul>"); in_ul = True
-            out.append(f"<li>{m_list.group(2)}</li>")
-        else:
-            if in_ul: out.append("</ul>"); in_ul = False
-            if line.strip() == "": out.append("<br>")
-            else: out.append(line + "<br>")
-    if in_ul: out.append("</ul>")
-    html_out = "".join(out)
-    for i, code in enumerate(code_blocks):
-        html_out = html_out.replace(f"@@CODEBLOCK_{i}@@", f"<pre><code>{code}</code></pre>")
-    return html_out
+# st.markdown("""
+# <style>
+#     div[data-testid="stChatMessageContent"] { background: transparent !important; padding: 0 !important; }
+#     div[data-testid="stChatMessage"] { background: transparent !important; }
+#     div[data-testid="stChatMessageAvatar"] { display: none !important; }
+#     .chat-card { border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; }
+#     .chat-content { width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+#     .student-card { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
+#     .tutor-card { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
+# </style>
+# """, unsafe_allow_html=True)
+#
+# def safe_markdown_to_html(text: str) -> str:
+#     text = (text or "").replace("\r\n", "\n")
+#     escaped = html.escape(text)
+#     code_blocks = []
+#     def _codeblock_repl(m):
+#         code_blocks.append(m.group(1))
+#         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
+#     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
+#     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
+#     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+#     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
+#     lines = escaped.split("\n")
+#     out = []
+#     in_ul = False
+#     for line in lines:
+#         m_header = re.match(r"^\s*###\s+(.*)$", line)
+#         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
+#         if m_header:
+#             if in_ul: out.append("</ul>"); in_ul = False
+#             out.append(f"<h3>{m_header.group(1)}</h3>")
+#         elif m_list:
+#             if not in_ul: out.append("<ul>"); in_ul = True
+#             out.append(f"<li>{m_list.group(2)}</li>")
+#         else:
+#             if in_ul: out.append("</ul>"); in_ul = False
+#             if line.strip() == "": out.append("<br>")
+#             else: out.append(line + "<br>")
+#     if in_ul: out.append("</ul>")
+#     html_out = "".join(out)
+#     for i, code in enumerate(code_blocks):
+#         html_out = html_out.replace(f"@@CODEBLOCK_{i}@@", f"<pre><code>{code}</code></pre>")
+#     return html_out
 
 def render_chat_card(who_label: str, css_class: str, text: str):
-    safe_body_html = safe_markdown_to_html(text)
-    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br>{safe_body_html}</div></div>', unsafe_allow_html=True)
+    #safe_body_html = safe_markdown_to_html(text)
+    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>', unsafe_allow_html=True)
 
 # --- Updated Firebase Connection ---
 # --- Updated Firebase Connection ---
