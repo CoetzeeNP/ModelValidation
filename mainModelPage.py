@@ -103,27 +103,24 @@ db_ref = get_firebase_connection()
 def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_type):
     if db_ref:
         try:
-            # We explicitly target the 'logs' child
-            log_entry = db_ref.child("logs").push({
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "user_id": str(user_id),
+            # We sanitize the user_id (Firebase keys can't contain '.', '#', '$', '[', or ']')
+            clean_user_id = str(user_id).replace(".", "_")
+
+            # Use a timestamp-based key to keep entries in order
+            timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # Store data at: /logs/user_id/timestamp_key
+            db_ref.child("logs").child(clean_user_id).child(timestamp_key).set({
                 "model_name": model_name,
-                "prompt": str(prompt_),
-                "response": str(full_response),
-                "interaction_type": interaction_type
+                "prompt": prompt_,
+                "response": full_response,
+                "interaction_type": interaction_type,
+                "full_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-            # This print will show up in your Streamlit Cloud logs/terminal
-            print(f"✅ Firebase Write Success: {log_entry.key}")
             return True
         except Exception as e:
-            st.error(f"Firebase Write Error: {e}")
-            print(f"❌ Firebase Write Failed: {e}")
+            st.error(f"Firebase Logging error: {e}")
             return False
-    else:
-        print("❌ Firebase Reference is missing.")
-        return False
-
-# Replace calls to save_to_google_sheets with save_to_firebase
 
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
