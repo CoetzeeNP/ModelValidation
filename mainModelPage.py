@@ -192,76 +192,67 @@ with st.sidebar:
 # --- Main App ---
 if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
-    # Create the container and add filler text
     with st.container():
         st.markdown("### You need to be signed in to get access to the Afrikaans Assistant!")
-        # Optional: Add a visual placeholder
-        st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
-                "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
-                " laboris nisi ut aliquip ex ea commodo consequat.\n\n "
-                ""
-                "Additional dashboard features will appear here once you are verified.")
+        st.info("Additional dashboard features will appear here once you are verified.")
 else:
-    st.info("You are welcome to start chatting with the Assistant using the text box below!")
+    # 1. Display Chat History
+    # This loop renders all previous messages every time the app reruns
     for msg in st.session_state["messages"]:
-        role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
-        render_chat_card(role, card, msg["content"])
+        role = msg["role"]
+        # Use specific icons for Student and Tutor
+        avatar = "👨‍🎓" if role == "user" else "🌍"
+        with st.chat_message(role, avatar=avatar):
+            st.markdown(msg["content"])
 
-    # Disable input if feedback is needed
-    input_placeholder = "Please give feedback on the last answer to continue..." if st.session_state["feedback_pending"] else "Ask your Afrikaans question..."
+    # 2. Input Logic
+    # Disable input if we are waiting for the student to click 'I understand'
+    input_placeholder = "Please give feedback on the last answer..." if st.session_state[
+        "feedback_pending"] else "Ask your Afrikaans question..."
     prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
 
     if prompt:
+        # Append and show user message immediately
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+        with st.chat_message("user", avatar="👨‍🎓"):
+            st.markdown(prompt)
+
+        # Generate AI response with a spinner
+        with st.chat_message("assistant", avatar="🌍"):
+            with st.spinner("Besig om te dink..."):
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
-                
-                # --- NEW LOGGING CALL ---
-                save_to_firebase(
-                    st.session_state["current_user"], 
-                    selected_label, 
-                    prompt, 
-                    reply, 
-                    "INITIAL_QUERY"
-                )
-                # ------------------------
+                st.markdown(reply)
 
-                st.session_state["messages"].append({"role": "assistant", "content": reply})
-                st.session_state["feedback_pending"] = True
-                st.rerun()
+        # Log to Firebase
+        save_to_firebase(
+            st.session_state["current_user"],
+            selected_label,
+            prompt,
+            reply,
+            "INITIAL_QUERY"
+        )
 
-    st.markdown("""
-        <style>
-        /* Target the 'I understand!' button by its label */
-        div[data-testid="stColumn"]:nth-of-type(1) button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-        }
-        div[data-testid="stColumn"]:nth-of-type(1) button:hover {
-            background-color: #218838;
-            border: none;
-            color: white;
-        }
+        # Update session state and refresh to show feedback buttons
+        st.session_state["messages"].append({"role": "assistant", "content": reply})
+        st.session_state["feedback_pending"] = True
+        st.rerun()
 
-        /* Target the 'I need more help!' button */
-        div[data-testid="stColumn"]:nth-of-type(2) button {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-        }
-        div[data-testid="stColumn"]:nth-of-type(2) button:hover {
-            background-color: #c82333;
-            border: none;
-            color: white;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-    # Feedback Buttons
+    # 3. Feedback UI
     if st.session_state["feedback_pending"]:
-        st.info("Please indicate if you understood the generated response above:")
+        st.divider()  # Visual break for feedback
+        st.info("Het jy die verduideliking verstaan? (Did you understand the explanation?)")
+
+        # Apply your custom button colors via CSS
+        st.markdown("""
+            <style>
+            div[data-testid="stColumn"]:nth-of-type(1) button { background-color: #28a745 !important; color: white !important; }
+            div[data-testid="stColumn"]:nth-of-type(2) button { background-color: #dc3545 !important; color: white !important; }
+            </style>
+            """, unsafe_allow_html=True)
+
         c1, c2 = st.columns(2)
-        with c1: st.button("I understand!", on_click=handle_feedback, args=(True,), use_container_width=True)
-        with c2: st.button("I need more help!", on_click=handle_feedback, args=(False,), use_container_width=True)
+        with c1:
+            st.button("Ek verstaan! (I understand)", on_click=handle_feedback, args=(True,), use_container_width=True)
+        with c2:
+            st.button("Ek het hulp nodig (More help)", on_click=handle_feedback, args=(False,),
+                      use_container_width=True)
