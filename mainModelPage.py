@@ -69,8 +69,10 @@ st.set_page_config(layout="wide")
 #     return html_out
 
 def render_chat_card(who_label: str, css_class: str, text: str):
-    #safe_body_html = safe_markdown_to_html(text)
-    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>', unsafe_allow_html=True)
+    # safe_body_html = safe_markdown_to_html(text)
+    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>',
+                unsafe_allow_html=True)
+
 
 # --- Updated Firebase Connection ---
 # --- Updated Firebase Connection ---
@@ -122,13 +124,18 @@ def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_ty
             st.error(f"Firebase Logging error: {e}")
             return False
 
+
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
         client = genai.Client(api_key=st.secrets["api_keys"]["google"])
-        api_contents = [types.Content(role="user" if m["role"]=="user" else "model", parts=[types.Part.from_text(text=m["content"])]) for m in chat_history]
-        response = client.models.generate_content(model=MODEL_MAPPING[model_selection], contents=api_contents, config=types.GenerateContentConfig(temperature=0.7, system_instruction=system_instruction_text))
+        api_contents = [types.Content(role="user" if m["role"] == "user" else "model",
+                                      parts=[types.Part.from_text(text=m["content"])]) for m in chat_history]
+        response = client.models.generate_content(model=MODEL_MAPPING[model_selection], contents=api_contents,
+                                                  config=types.GenerateContentConfig(temperature=0.7,
+                                                                                     system_instruction=system_instruction_text))
         return response.text
-    except Exception as e: return f"Error: {str(e)}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 if "messages" not in st.session_state: st.session_state["messages"] = []
@@ -139,23 +146,25 @@ if "current_user" not in st.session_state: st.session_state["current_user"] = No
 
 def handle_feedback(understood: bool):
     interaction = "UNDERSTOOD_FEEDBACK" if understood else "CLARIFICATION_REQUESTED"
-    last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
+    last_user_prompt = st.session_state["messages"][-2]["content"]  # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
 
     save_to_firebase(st.session_state["current_user"], selected_label, last_ai_reply, interaction, "FEEDBACK_EVENT")
-    
+
     if not understood:
         clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
         st.session_state["messages"].append({"role": "user", "content": clarification_prompt})
-        
+
         ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
 
-        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
-        
+        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply,
+                         "CLARIFICATION_RESPONSE")
+
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
         st.session_state["feedback_pending"] = True
     else:
         st.session_state["feedback_pending"] = False
+
 
 with st.sidebar:
     st.header("Afrikaans Assistant Menu")
@@ -201,8 +210,8 @@ else:
     for msg in st.session_state["messages"]:
         role = msg["role"]
         # Use specific icons for Student and Tutor
-        avatar = "👨‍🎓" if role == "user" else "🌍"
-        with st.chat_message(role, avatar=avatar):
+        avatar = {st.session_state['current_user']} if role == "user" else "Afrikaans Assistant"
+        with st.chat_message(role, text=avatar):
             st.markdown(msg["content"])
 
     # 2. Input Logic
@@ -214,11 +223,11 @@ else:
     if prompt:
         # Append and show user message immediately
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar="👨‍🎓"):
+        with st.chat_message("user", {st.session_state['current_user']}):
             st.markdown(prompt)
 
         # Generate AI response with a spinner
-        with st.chat_message("assistant", avatar="🌍"):
+        with st.chat_message("assistant", text="Afrikaans Assistant"):
             with st.spinner("Besig om te dink..."):
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
                 st.markdown(reply)
