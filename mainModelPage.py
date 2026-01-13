@@ -116,16 +116,6 @@ def handle_feedback(understood: bool):
     else:
         st.session_state["feedback_pending"] = False
 
-
-# --- UI Header ---
-header_container = st.container()
-with header_container:
-    # Use a placeholder if the image isn't available
-    try:
-        st.image("combined_logo.jpg", use_container_width=True)
-    except:
-        st.title("🇿🇦 Generative Afrikaans Assistant")
-
 # --- Sidebar ---
 with st.sidebar:
     st.header("Menu")
