@@ -69,8 +69,10 @@ st.set_page_config(layout="wide")
 #     return html_out
 
 def render_chat_card(who_label: str, css_class: str, text: str):
-    #safe_body_html = safe_markdown_to_html(text)
-    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>', unsafe_allow_html=True)
+    # safe_body_html = safe_markdown_to_html(text)
+    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>',
+                unsafe_allow_html=True)
+
 
 # --- Updated Firebase Connection ---
 # --- Updated Firebase Connection ---
@@ -122,13 +124,18 @@ def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_ty
             st.error(f"Firebase Logging error: {e}")
             return False
 
+
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
         client = genai.Client(api_key=st.secrets["api_keys"]["google"])
-        api_contents = [types.Content(role="user" if m["role"]=="user" else "model", parts=[types.Part.from_text(text=m["content"])]) for m in chat_history]
-        response = client.models.generate_content(model=MODEL_MAPPING[model_selection], contents=api_contents, config=types.GenerateContentConfig(temperature=0.7, system_instruction=system_instruction_text))
+        api_contents = [types.Content(role="user" if m["role"] == "user" else "model",
+                                      parts=[types.Part.from_text(text=m["content"])]) for m in chat_history]
+        response = client.models.generate_content(model=MODEL_MAPPING[model_selection], contents=api_contents,
+                                                  config=types.GenerateContentConfig(temperature=0.7,
+                                                                                     system_instruction=system_instruction_text))
         return response.text
-    except Exception as e: return f"Error: {str(e)}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 if "messages" not in st.session_state: st.session_state["messages"] = []
@@ -139,7 +146,7 @@ if "current_user" not in st.session_state: st.session_state["current_user"] = No
 
 def handle_feedback(understood: bool):
     interaction = "UNDERSTOOD_FEEDBACK" if understood else "CLARIFICATION_REQUESTED"
-    last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
+    last_user_prompt = st.session_state["messages"][-2]["content"]  # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
 
     save_to_firebase(st.session_state["current_user"], selected_label, last_ai_reply, interaction, "FEEDBACK_EVENT")
@@ -150,12 +157,14 @@ def handle_feedback(understood: bool):
 
         ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
 
-        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply, "CLARIFICATION_RESPONSE")
+        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply,
+                         "CLARIFICATION_RESPONSE")
 
         st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
         st.session_state["feedback_pending"] = True
     else:
         st.session_state["feedback_pending"] = False
+
 
 with st.sidebar:
     st.header("Afrikaans Assistant Menu")
@@ -189,3 +198,80 @@ with st.sidebar:
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
         system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
 
+# --- Main App ---
+if not st.session_state["authenticated"]:
+    st.warning("Please login with an authorized Student ID in the sidebar.")
+    # Create the container and add filler text
+    with st.container():
+        st.markdown("### You need to be signed in to get access to the Afrikaans Assistant!")
+        # Optional: Add a visual placeholder
+        st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
+                "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+                " laboris nisi ut aliquip ex ea commodo consequat.\n\n "
+                ""
+                "Additional dashboard features will appear here once you are verified.")
+else:
+    st.info("You are welcome to start chatting with the Assistant using the text box below!")
+    for msg in st.session_state["messages"]:
+        role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
+        render_chat_card(role, card, msg["content"])
+
+    # Disable input if feedback is needed
+    input_placeholder = "Please give feedback on the last answer to continue..." if st.session_state[
+        "feedback_pending"] else "Ask your Afrikaans question..."
+    prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
+
+    if prompt:
+        st.session_state["messages"].append({"role": "user", "content": prompt})
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
+
+                # --- NEW LOGGING CALL ---
+                save_to_firebase(
+                    st.session_state["current_user"],
+                    selected_label,
+                    prompt,
+                    reply,
+                    "INITIAL_QUERY"
+                )
+                # ------------------------
+
+                st.session_state["messages"].append({"role": "assistant", "content": reply})
+                st.session_state["feedback_pending"] = True
+                st.rerun()
+
+    st.markdown("""
+        <style>
+        /* Target the 'I understand!' button by its label */
+        div[data-testid="stColumn"]:nth-of-type(1) button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(1) button:hover {
+            background-color: #218838;
+            border: none;
+            color: white;
+        }
+
+        /* Target the 'I need more help!' button */
+        div[data-testid="stColumn"]:nth-of-type(2) button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(2) button:hover {
+            background-color: #c82333;
+            border: none;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # Feedback Buttons
+    if st.session_state["feedback_pending"]:
+        st.info("Please indicate if you understood the generated response above:")
+        c1, c2 = st.columns(2)
+        with c1: st.button("I understand!", on_click=handle_feedback, args=(True,), use_container_width=True)
+        with c2: st.button("I need more help!", on_click=handle_feedback, args=(False,), use_container_width=True)
