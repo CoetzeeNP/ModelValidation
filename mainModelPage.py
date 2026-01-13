@@ -22,76 +22,21 @@ st.title("Generative Afrikaans Assistant")
 
 st.set_page_config(layout="wide")
 
-
-# st.markdown("""
-# <style>
-#     div[data-testid="stChatMessageContent"] { background: transparent !important; padding: 0 !important; }
-#     div[data-testid="stChatMessage"] { background: transparent !important; }
-#     div[data-testid="stChatMessageAvatar"] { display: none !important; }
-#     .chat-card { border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; }
-#     .chat-content { width: 100%; overflow-wrap: anywhere; word-break: break-word; }
-#     .student-card { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
-#     .tutor-card { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
-# </style>
-# """, unsafe_allow_html=True)
-#
-# def safe_markdown_to_html(text: str) -> str:
-#     text = (text or "").replace("\r\n", "\n")
-#     escaped = html.escape(text)
-#     code_blocks = []
-#     def _codeblock_repl(m):
-#         code_blocks.append(m.group(1))
-#         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
-#     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
-#     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
-#     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
-#     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
-#     lines = escaped.split("\n")
-#     out = []
-#     in_ul = False
-#     for line in lines:
-#         m_header = re.match(r"^\s*###\s+(.*)$", line)
-#         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
-#         if m_header:
-#             if in_ul: out.append("</ul>"); in_ul = False
-#             out.append(f"<h3>{m_header.group(1)}</h3>")
-#         elif m_list:
-#             if not in_ul: out.append("<ul>"); in_ul = True
-#             out.append(f"<li>{m_list.group(2)}</li>")
-#         else:
-#             if in_ul: out.append("</ul>"); in_ul = False
-#             if line.strip() == "": out.append("<br>")
-#             else: out.append(line + "<br>")
-#     if in_ul: out.append("</ul>")
-#     html_out = "".join(out)
-#     for i, code in enumerate(code_blocks):
-#         html_out = html_out.replace(f"@@CODEBLOCK_{i}@@", f"<pre><code>{code}</code></pre>")
-#     return html_out
-
-def render_chat_card(who_label: str, css_class: str, text: str):
-    # safe_body_html = safe_markdown_to_html(text)
-    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>',
-                unsafe_allow_html=True)
-
-
-# --- Updated Firebase Connection ---
-# --- Updated Firebase Connection ---
+# --- Firebase Connection ---
 @st.cache_resource
 def get_firebase_connection():
     try:
         if not firebase_admin._apps:
+            if "firebase_service_account" not in st.secrets:
+                st.error("Firebase credentials missing in secrets!")
+                return None
+
             cred_info = dict(st.secrets["firebase_service_account"])
             cred_info["private_key"] = cred_info["private_key"].replace("\\n", "\n")
-
-            # Ensure the URL is clean
             db_url = st.secrets["firebase_db_url"].strip()
 
             cred = credentials.Certificate(cred_info)
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': db_url
-            })
-
-        # Return the root reference
+            firebase_admin.initialize_app(cred, {'databaseURL': db_url})
         return db.reference("/")
     except Exception as e:
         st.error(f"Firebase Init Error: {e}")
@@ -101,17 +46,13 @@ def get_firebase_connection():
 db_ref = get_firebase_connection()
 
 
-# --- Updated Logging Function with Debugging ---
+# --- Logging Function ---
 def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_type):
     if db_ref:
         try:
-            # We sanitize the user_id (Firebase keys can't contain '.', '#', '$', '[', or ']')
             clean_user_id = str(user_id).replace(".", "_")
+            timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-            # Use a timestamp-based key to keep entries in order
-            timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-            # Store data at: /logs/user_id/timestamp_key
             db_ref.child("logs").child(clean_user_id).child(timestamp_key).set({
                 "model_name": model_name,
                 "prompt": prompt_,
@@ -125,143 +66,130 @@ def save_to_firebase(user_id, model_name, prompt_, full_response, interaction_ty
             return False
 
 
+# --- AI Response Function ---
 def get_ai_response(model_selection, chat_history, system_instruction_text):
     try:
         client = genai.Client(api_key=st.secrets["api_keys"]["google"])
-        api_contents = [types.Content(role="user" if m["role"] == "user" else "model",
-                                      parts=[types.Part.from_text(text=m["content"])]) for m in chat_history]
-        response = client.models.generate_content(model=MODEL_MAPPING[model_selection], contents=api_contents,
-                                                  config=types.GenerateContentConfig(temperature=0.7,
-                                                                                     system_instruction=system_instruction_text))
+        api_contents = []
+        for m in chat_history:
+            role = "user" if m["role"] == "user" else "model"
+            api_contents.append(types.Content(role=role, parts=[types.Part.from_text(text=m["content"])]))
+
+        response = client.models.generate_content(
+            model=MODEL_MAPPING.get(model_selection, "gemini-2.0-flash"),
+            contents=api_contents,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                system_instruction=system_instruction_text
+            )
+        )
         return response.text
     except Exception as e:
         return f"Error: {str(e)}"
 
 
+# --- Session State Management ---
 if "messages" not in st.session_state: st.session_state["messages"] = []
 if "feedback_pending" not in st.session_state: st.session_state["feedback_pending"] = False
 if "authenticated" not in st.session_state: st.session_state["authenticated"] = False
 if "current_user" not in st.session_state: st.session_state["current_user"] = None
 
 
+# --- Feedback Handler ---
 def handle_feedback(understood: bool):
     interaction = "UNDERSTOOD_FEEDBACK" if understood else "CLARIFICATION_REQUESTED"
-    last_user_prompt = st.session_state["messages"][-2]["content"]  # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
 
-    save_to_firebase(st.session_state["current_user"], selected_label, last_ai_reply, interaction, "FEEDBACK_EVENT")
+    save_to_firebase(st.session_state["current_user"], selected_label, "Feedback Button", last_ai_reply, interaction)
 
     if not understood:
-        clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
+        clarification_prompt = f"I don't understand the previous explanation. Please break it down further."
         st.session_state["messages"].append({"role": "user", "content": clarification_prompt})
 
-        ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
+        with st.spinner("Besig om verder te verduidelik..."):
+            ai_reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
+            st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
+            save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply,
+                             "CLARIFICATION_RESPONSE")
 
-        save_to_firebase(st.session_state["current_user"], selected_label, clarification_prompt, ai_reply,
-                         "CLARIFICATION_RESPONSE")
-
-        st.session_state["messages"].append({"role": "assistant", "content": ai_reply})
         st.session_state["feedback_pending"] = True
     else:
         st.session_state["feedback_pending"] = False
 
 
+# --- UI Header ---
+header_container = st.container()
+with header_container:
+    # Use a placeholder if the image isn't available
+    try:
+        st.image("combined_logo.jpg", use_container_width=True)
+    except:
+        st.title("🇿🇦 Generative Afrikaans Assistant")
+
+# --- Sidebar ---
 with st.sidebar:
-    st.header("Afrikaans Assistant Menu")
-    st.write(f"**Logged in as:** {st.session_state['current_user']}")
+    st.header("Menu")
     if not st.session_state["authenticated"]:
         u_id = st.text_input("Enter Student ID", type="password")
-        # Placing login button in a column to keep it consistent
         if st.button("Login", use_container_width=True):
             if u_id in AUTHORIZED_STUDENT_IDS:
                 st.session_state["authenticated"] = True
-                st.session_state["current_user"] = u_id
-                st.success("Welcome!")
+                st.session_state["current_user"] = u_id if u_id != "" else "Guest"
                 st.rerun()
             else:
                 st.error("Invalid Student ID")
     else:
-        # Create two columns for the buttons
+        st.write(f"**User:** {st.session_state['current_user']}")
         col1, col2 = st.columns(2)
-
         with col1:
             if st.button("Logout", use_container_width=True):
                 st.session_state.clear()
                 st.rerun()
-
         with col2:
-            # Your new MS Form button
             st.link_button("Feedback", "https://forms.office.com/your-link", use_container_width=True)
 
-    if st.session_state["authenticated"]:
         st.markdown("---")
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
-        system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
+        system_instruction_input = st.text_area("System Message",
+                                                "You are an Afrikaans tutor. Use STOMPI rules to explain sentence structure.")
 
-# --- Main App ---
+# --- Main Chat Area ---
 if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
-    with st.container():
-        st.markdown("### You need to be signed in to get access to the Afrikaans Assistant!")
-        st.info("Additional dashboard features will appear here once you are verified.")
 else:
+    # Visual aid for STOMPI (Instructional Diagram)
+    with st.expander("Help met STOMPI (Sentence Structure Guide)"):
+        st.write("Onthou die volgorde:")
+
     # 1. Display Chat History
-    # This loop renders all previous messages every time the app reruns
     for msg in st.session_state["messages"]:
-        role = msg["role"]
-        # Use specific icons for Student and Tutor
-        avatar = {st.session_state['current_user']} if role == "user" else "Afrikaans Assistant"
-        with st.chat_message(role, text=avatar):
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
     # 2. Input Logic
-    # Disable input if we are waiting for the student to click 'I understand'
-    input_placeholder = "Please give feedback on the last answer..." if st.session_state[
-        "feedback_pending"] else "Ask your Afrikaans question..."
+    input_placeholder = "Waiting for feedback..." if st.session_state["feedback_pending"] else "Vra 'n vraag..."
     prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
 
     if prompt:
-        # Append and show user message immediately
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user", {st.session_state['current_user']}):
+        with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Generate AI response with a spinner
-        with st.chat_message("assistant", text="Afrikaans Assistant"):
+        with st.chat_message("assistant"):
             with st.spinner("Besig om te dink..."):
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
                 st.markdown(reply)
 
-        # Log to Firebase
-        save_to_firebase(
-            st.session_state["current_user"],
-            selected_label,
-            prompt,
-            reply,
-            "INITIAL_QUERY"
-        )
-
-        # Update session state and refresh to show feedback buttons
+        save_to_firebase(st.session_state["current_user"], selected_label, prompt, reply, "INITIAL_QUERY")
         st.session_state["messages"].append({"role": "assistant", "content": reply})
         st.session_state["feedback_pending"] = True
         st.rerun()
 
     # 3. Feedback UI
     if st.session_state["feedback_pending"]:
-        st.divider()  # Visual break for feedback
-        st.info("Het jy die verduideliking verstaan? (Did you understand the explanation?)")
-
-        # Apply your custom button colors via CSS
-        st.markdown("""
-            <style>
-            div[data-testid="stColumn"]:nth-of-type(1) button { background-color: #28a745 !important; color: white !important; }
-            div[data-testid="stColumn"]:nth-of-type(2) button { background-color: #dc3545 !important; color: white !important; }
-            </style>
-            """, unsafe_allow_html=True)
-
+        st.info("Het jy die verduideliking verstaan? (Did you understand?)")
         c1, c2 = st.columns(2)
         with c1:
-            st.button("Ek verstaan! (I understand)", on_click=handle_feedback, args=(True,), use_container_width=True)
+            st.button("✅ Ek verstaan!", on_click=handle_feedback, args=(True,), use_container_width=True)
         with c2:
-            st.button("Ek het hulp nodig (More help)", on_click=handle_feedback, args=(False,),
-                      use_container_width=True)
+            st.button("❌ Ek het hulp nodig", on_click=handle_feedback, args=(False,), use_container_width=True)
