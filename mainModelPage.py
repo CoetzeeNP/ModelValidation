@@ -22,6 +22,59 @@ st.title("Generative Afrikaans Assistant")
 
 st.set_page_config(layout="wide")
 
+
+# st.markdown("""
+# <style>
+#     div[data-testid="stChatMessageContent"] { background: transparent !important; padding: 0 !important; }
+#     div[data-testid="stChatMessage"] { background: transparent !important; }
+#     div[data-testid="stChatMessageAvatar"] { display: none !important; }
+#     .chat-card { border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; }
+#     .chat-content { width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+#     .student-card { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
+#     .tutor-card { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
+# </style>
+# """, unsafe_allow_html=True)
+#
+# def safe_markdown_to_html(text: str) -> str:
+#     text = (text or "").replace("\r\n", "\n")
+#     escaped = html.escape(text)
+#     code_blocks = []
+#     def _codeblock_repl(m):
+#         code_blocks.append(m.group(1))
+#         return f"@@CODEBLOCK_{len(code_blocks) - 1}@@"
+#     escaped = re.sub(r"```(.*?)```", _codeblock_repl, escaped, flags=re.DOTALL)
+#     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
+#     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+#     escaped = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", escaped)
+#     lines = escaped.split("\n")
+#     out = []
+#     in_ul = False
+#     for line in lines:
+#         m_header = re.match(r"^\s*###\s+(.*)$", line)
+#         m_list = re.match(r"^\s*([*\-])\s+(.*)$", line)
+#         if m_header:
+#             if in_ul: out.append("</ul>"); in_ul = False
+#             out.append(f"<h3>{m_header.group(1)}</h3>")
+#         elif m_list:
+#             if not in_ul: out.append("<ul>"); in_ul = True
+#             out.append(f"<li>{m_list.group(2)}</li>")
+#         else:
+#             if in_ul: out.append("</ul>"); in_ul = False
+#             if line.strip() == "": out.append("<br>")
+#             else: out.append(line + "<br>")
+#     if in_ul: out.append("</ul>")
+#     html_out = "".join(out)
+#     for i, code in enumerate(code_blocks):
+#         html_out = html_out.replace(f"@@CODEBLOCK_{i}@@", f"<pre><code>{code}</code></pre>")
+#     return html_out
+
+def render_chat_card(who_label: str, css_class: str, text: str):
+    # safe_body_html = safe_markdown_to_html(text)
+    st.markdown(f'<div class="chat-card {css_class}"><div class="chat-content"><b>{who_label}:</b><br></div></div>',
+                unsafe_allow_html=True)
+
+
+# --- Updated Firebase Connection ---
 # --- Updated Firebase Connection ---
 @st.cache_resource
 def get_firebase_connection():
@@ -148,66 +201,77 @@ with st.sidebar:
 # --- Main App ---
 if not st.session_state["authenticated"]:
     st.warning("Please login with an authorized Student ID in the sidebar.")
+    # Create the container and add filler text
     with st.container():
         st.markdown("### You need to be signed in to get access to the Afrikaans Assistant!")
-        st.info("Additional dashboard features will appear here once you are verified.")
+        # Optional: Add a visual placeholder
+        st.info("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut "
+                "labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+                " laboris nisi ut aliquip ex ea commodo consequat.\n\n "
+                ""
+                "Additional dashboard features will appear here once you are verified.")
 else:
-    # 1. Display Chat History
+    st.info("You are welcome to start chatting with the Assistant using the text box below!")
     for msg in st.session_state["messages"]:
-        role = msg["role"]
+        role, card = ("Student", "student-card") if msg["role"] == "user" else ("Tutor", "tutor-card")
+        render_chat_card(role, card, msg["content"])
 
-        # Set the label/avatar based on the role
-        # We pass the Student ID for user and the name for the assistant
-        chat_label = st.session_state['current_user'] if role == "user" else "Afrikaans Assistant"
-
-        with st.chat_message(role, avatar=chat_label):
-            st.markdown(msg["content"])
-
-    # 2. Input Logic
-    input_placeholder = "Please give feedback on the last answer..." if st.session_state[
+    # Disable input if feedback is needed
+    input_placeholder = "Please give feedback on the last answer to continue..." if st.session_state[
         "feedback_pending"] else "Ask your Afrikaans question..."
     prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
 
     if prompt:
-        # Append and show user message immediately
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar=st.session_state['current_user']):
-            st.markdown(prompt)
-
-        # Generate AI response with a spinner
-        with st.chat_message("assistant", avatar="Afrikaans Assistant"):
-            with st.spinner("Besig om te dink..."):
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
                 reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
-                st.markdown(reply)
 
-        # Log to Firebase
-        save_to_firebase(
-            st.session_state["current_user"],
-            selected_label,
-            prompt,
-            reply,
-            "INITIAL_QUERY"
-        )
+                # --- NEW LOGGING CALL ---
+                save_to_firebase(
+                    st.session_state["current_user"],
+                    selected_label,
+                    prompt,
+                    reply,
+                    "INITIAL_QUERY"
+                )
+                # ------------------------
 
-        st.session_state["messages"].append({"role": "assistant", "content": reply})
-        st.session_state["feedback_pending"] = True
-        st.rerun()
+                st.session_state["messages"].append({"role": "assistant", "content": reply})
+                st.session_state["feedback_pending"] = True
+                st.rerun()
 
-    # 3. Feedback UI
+    st.markdown("""
+        <style>
+        /* Target the 'I understand!' button by its label */
+        div[data-testid="stColumn"]:nth-of-type(1) button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(1) button:hover {
+            background-color: #218838;
+            border: none;
+            color: white;
+        }
+
+        /* Target the 'I need more help!' button */
+        div[data-testid="stColumn"]:nth-of-type(2) button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        div[data-testid="stColumn"]:nth-of-type(2) button:hover {
+            background-color: #c82333;
+            border: none;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # Feedback Buttons
     if st.session_state["feedback_pending"]:
-        st.divider()
-        st.info("Het jy die verduideliking verstaan? (Did you understand the explanation?)")
-
-        st.markdown("""
-            <style>
-            div[data-testid="stColumn"]:nth-of-type(1) button { background-color: #28a745 !important; color: white !important; }
-            div[data-testid="stColumn"]:nth-of-type(2) button { background-color: #dc3545 !important; color: white !important; }
-            </style>
-            """, unsafe_allow_html=True)
-
+        st.info("Please indicate if you understood the generated response above:")
         c1, c2 = st.columns(2)
-        with c1:
-            st.button("Ek verstaan! (I understand)", on_click=handle_feedback, args=(True,), use_container_width=True)
-        with c2:
-            st.button("Ek het hulp nodig (More help)", on_click=handle_feedback, args=(False,),
-                      use_container_width=True)
+        with c1: st.button("I understand!", on_click=handle_feedback, args=(True,), use_container_width=True)
+        with c2: st.button("I need more help!", on_click=handle_feedback, args=(False,), use_container_width=True)
