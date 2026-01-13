@@ -151,10 +151,8 @@ else:
     # This loop renders previous messages in bounded boxes
     for msg in st.session_state["messages"]:
         is_user = msg["role"] == "user"
-        avatar = "👨‍🎓" if is_user else "🌍"
         label = "Student" if is_user else "Tutor"
-
-        with st.chat_message(msg["role"], avatar=avatar):
+        with st.chat_message(msg["role"]):
             # 'border=True' ensures the response has a boundary like a card
             with st.container(border=True):
                 st.markdown(f"**{label}:**")
@@ -169,13 +167,13 @@ else:
     if prompt:
         # Save and Display Student Message
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar="👨‍🎓"):
+        with st.chat_message("user"):
             with st.container(border=True):
                 st.markdown("**Student:**")
                 st.markdown(prompt)
 
         # Generate and Display Tutor Message
-        with st.chat_message("assistant", avatar="🌍"):
+        with st.chat_message("assistant"):
             with st.container(border=True):
                 st.markdown("**Tutor:**")
                 with st.spinner("Besig om te dink..."):
@@ -211,6 +209,6 @@ else:
 
         c1, c2 = st.columns(2)
         with c1:
-            st.button("Ek verstaan! ✅", on_click=handle_feedback, args=(True,), use_container_width=True)
+            st.button("I understand! / Ek verstaan!", on_click=handle_feedback, args=(True,), use_container_width=True)
         with c2:
-            st.button("Ek het hulp nodig ❌", on_click=handle_feedback, args=(False,), use_container_width=True)
+            st.button("I need some help! / Ek het hulp nodig!", on_click=handle_feedback, args=(False,), use_container_width=True)
