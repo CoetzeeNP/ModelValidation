@@ -151,8 +151,10 @@ else:
     # This loop renders previous messages in bounded boxes
     for msg in st.session_state["messages"]:
         is_user = msg["role"] == "user"
+        avatar = "" if is_user else ""
         label = "Student" if is_user else "Tutor"
-        with st.chat_message(msg["role"]):
+
+        with st.chat_message(msg["role"], avatar=avatar):
             # 'border=True' ensures the response has a boundary like a card
             with st.container(border=True):
                 st.markdown(f"**{label}:**")
@@ -167,13 +169,13 @@ else:
     if prompt:
         # Save and Display Student Message
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar="👨‍🎓"):
             with st.container(border=True):
                 st.markdown("**Student:**")
                 st.markdown(prompt)
 
         # Generate and Display Tutor Message
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="🌍"):
             with st.container(border=True):
                 st.markdown("**Tutor:**")
                 with st.spinner("Besig om te dink..."):
