@@ -153,8 +153,8 @@ else:
         is_user = msg["role"] == "user"
         label = st.session_state["current_user"] if is_user else "Afrikaans AI Assistant"
 
-        # Avatar removed from loop
-        with st.chat_message(msg["role"], avatar=False):
+        # Remove the avatar parameter completely to use defaults/cleaner look
+        with st.chat_message(msg["role"]):
             with st.container(border=True):
                 st.markdown(f"**{label}:**")
                 st.markdown(msg["content"])
@@ -167,14 +167,15 @@ else:
     if prompt:
         # Save and Display Student Message
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        # Avatar removed from user response
-        with st.chat_message("user", avatar=False):
+
+        # Remove avatar parameter here as well
+        with st.chat_message("user"):
             with st.container(border=True):
                 st.markdown("**Student:**")
                 st.markdown(prompt)
 
-        # Avatar removed from assistant response
-        with st.chat_message("assistant", avatar=False):
+        # Remove avatar parameter here as well
+        with st.chat_message("assistant"):
             with st.container(border=True):
                 st.markdown("**Afrikaans AI Assistant:**")
                 with st.spinner("Besig om te dink..."):
