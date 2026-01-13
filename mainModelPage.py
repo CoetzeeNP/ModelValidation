@@ -151,17 +151,15 @@ else:
     # This loop renders previous messages in bounded boxes
     for msg in st.session_state["messages"]:
         is_user = msg["role"] == "user"
-        avatar = "👨‍🎓" if is_user else "🌍"
-        label = "Student" if is_user else "Tutor"
+        label = st.session_state["current_user"] if is_user else "Afrikaans AI Assistant"
 
-        with st.chat_message(msg["role"], avatar=avatar):
-            # 'border=True' ensures the response has a boundary like a card
+        # Avatar removed from loop
+        with st.chat_message(msg["role"]):
             with st.container(border=True):
                 st.markdown(f"**{label}:**")
                 st.markdown(msg["content"])
 
     # 2. CHAT INPUT
-    # Input is disabled if we are waiting for feedback on the previous answer
     input_placeholder = "Please give feedback on the last answer..." if st.session_state[
         "feedback_pending"] else "Ask your Afrikaans question..."
     prompt = st.chat_input(input_placeholder, disabled=st.session_state["feedback_pending"])
@@ -169,15 +167,16 @@ else:
     if prompt:
         # Save and Display Student Message
         st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar="👨‍🎓"):
+        # Avatar removed from user response
+        with st.chat_message("user"):
             with st.container(border=True):
                 st.markdown("**Student:**")
                 st.markdown(prompt)
 
-        # Generate and Display Tutor Message
-        with st.chat_message("assistant", avatar="🌍"):
+        # Avatar removed from assistant response
+        with st.chat_message("assistant"):
             with st.container(border=True):
-                st.markdown("**Tutor:**")
+                st.markdown("**Afrikaans AI Assistant:**")
                 with st.spinner("Besig om te dink..."):
                     reply = get_ai_response(selected_label, st.session_state["messages"], system_instruction_input)
                     st.markdown(reply)
