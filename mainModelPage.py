@@ -151,7 +151,7 @@ else:
     # This loop renders previous messages in bounded boxes
     for msg in st.session_state["messages"]:
         is_user = msg["role"] == "user"
-        avatar = "" if is_user else ""
+        avatar = "👨‍🎓" if is_user else "🌍"
         label = "Student" if is_user else "Tutor"
 
         with st.chat_message(msg["role"], avatar=avatar):
@@ -211,6 +211,6 @@ else:
 
         c1, c2 = st.columns(2)
         with c1:
-            st.button("I understand! / Ek verstaan!", on_click=handle_feedback, args=(True,), use_container_width=True)
+            st.button("I understand / Ek verstaan!", on_click=handle_feedback, args=(True,), use_container_width=True)
         with c2:
             st.button("I need some help! / Ek het hulp nodig!", on_click=handle_feedback, args=(False,), use_container_width=True)
