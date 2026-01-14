@@ -137,7 +137,7 @@ with st.sidebar:
 
     if st.session_state["authenticated"]:
         st.markdown("---")
-        st.write("Clear the current chat.")
+        st.write("**Clear the Chat Screen.**")
         # --- NEW CLEAR CHAT BUTTON ---
         if st.button("Clear Chat", use_container_width=True, type="secondary"):
             st.session_state["messages"] = []
