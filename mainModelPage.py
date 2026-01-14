@@ -9,7 +9,8 @@ import re
 
 SHEET_NAME = "Gemini Logs"
 MODEL_MAPPING = {
-    "gemini-3-pro-preview": "gemini-3-pro-preview"
+    "gemini-3-pro-preview": "gemini-3-pro-preview",
+
 }
 
 AUTHORIZED_STUDENT_IDS = ["12345", "67890", "24680", "13579", "99999", ""]
@@ -131,7 +132,7 @@ with st.sidebar:
 
         with col2:
             # Your new MS Form button
-            st.link_button("Feedback", "https://forms.office.com/your-link", use_container_width=True)
+            st.link_button("Feedback", "https://forms.office.com/Pages/ResponsePage.aspx?id=uRv8jg-5SEq_bLoGhhk7gBvkZQsfRhhErcivaQmEhItUNENSMEJNQTM3UzQ1RlBMSFBUVTFKTFg2VS4u", use_container_width=True)
 
     if st.session_state["authenticated"]:
         st.markdown("---")
