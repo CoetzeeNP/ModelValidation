@@ -139,10 +139,10 @@ with st.sidebar:
         st.markdown("---")
         st.write("**Clear the Chat Screen**")
         # --- NEW CLEAR CHAT BUTTON ---
-        if st.button("Clear Chat", use_container_width=True, type="secondary"):
-            st.session_state["messages"] = []
-            st.session_state["feedback_pending"] = False
-            st.rerun()
+        if st.checkbox("Cleanup Mode"):
+            if st.button("Are you sure you want to clear all previous messages? / (Afrikaans Translation)"):
+                st.session_state["messages"] = []
+                st.rerun()
         # -----------------------------
 
         st.markdown("---")
