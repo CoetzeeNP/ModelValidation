@@ -134,19 +134,24 @@ with st.sidebar:
             # Your new MS Form button
             st.link_button("Feedback", "https://forms.office.com/Pages/ResponsePage.aspx?id=uRv8jg-5SEq_bLoGhhk7gBvkZQsfRhhErcivaQmEhItUNENSMEJNQTM3UzQ1RlBMSFBUVTFKTFg2VS4u", use_container_width=True)
 
-    st.markdown("---")
-
-    # --- NEW CLEAR CHAT BUTTON ---
-    if st.button("Clear Chat", use_container_width=True, type="secondary"):
-        st.session_state["messages"] = []
-        st.session_state["feedback_pending"] = False
-        st.rerun()
-    # -----------------------------
 
     if st.session_state["authenticated"]:
         st.markdown("---")
+
+        # --- NEW CLEAR CHAT BUTTON ---
+        if st.button("Clear Chat", use_container_width=True, type="secondary"):
+            st.session_state["messages"] = []
+            st.session_state["feedback_pending"] = False
+            st.rerun()
+        # -----------------------------
+
+        st.markdown("---")
         selected_label = st.selectbox("AI Model", list(MODEL_MAPPING.keys()))
         system_instruction_input = st.text_area("System Message", "You are an Afrikaans tutor. Use STOMPI rules.")
+
+
+
+
 
 # Check if user is logged in
 if not st.session_state["authenticated"]:
