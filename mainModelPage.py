@@ -92,7 +92,7 @@ def handle_feedback(understood: bool):
     last_user_prompt = st.session_state["messages"][-2]["content"] # The prompt before the AI reply
     last_ai_reply = st.session_state["messages"][-1]["content"]
 
-    save_to_firebase(st.session_state["current_user"], selected_label, last_ai_reply, interaction, "FEEDBACK_EVENT")
+    save_to_firebase(st.session_state["current_user"], selected_label, last_ai_reply, "", interaction)
 
     if not understood:
         clarification_prompt = f"I don't understand the previous explanation: '{last_ai_reply}'. Please break it down further."
