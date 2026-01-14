@@ -134,6 +134,8 @@ with st.sidebar:
             # Your new MS Form button
             st.link_button("Feedback", "https://forms.office.com/Pages/ResponsePage.aspx?id=uRv8jg-5SEq_bLoGhhk7gBvkZQsfRhhErcivaQmEhItUNENSMEJNQTM3UzQ1RlBMSFBUVTFKTFg2VS4u", use_container_width=True)
 
+    st.markdown("---")
+
     # --- NEW CLEAR CHAT BUTTON ---
     if st.button("Clear Chat", use_container_width=True, type="secondary"):
         st.session_state["messages"] = []
